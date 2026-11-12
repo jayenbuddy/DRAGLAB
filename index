@@ -1,0 +1,2298 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>203m Drag Race Physics & Telemetry Simulator - Pro Calibration</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono for Telemetry -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        telemetry: {
+                            bg: '#090c10',
+                            panel: '#11161f',
+                            card: '#161c28',
+                            border: '#232c3d',
+                            accent: '#f59e0b',
+                            red: '#ef4444',
+                            green: '#10b981',
+                            cyan: '#06b6d4',
+                            purple: '#8b5cf6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #090c10;
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #090c10;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #232c3d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3b4963;
+        }
+        .telemetry-grid-bg {
+            background-image: 
+                linear-gradient(to right, rgba(35, 44, 61, 0.22) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(35, 44, 61, 0.22) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            opacity: 1;
+        }
+        .shift-flash {
+            animation: flashRed 0.14s infinite alternate;
+        }
+        @keyframes flashRed {
+            from { background-color: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
+            to { background-color: rgba(239, 68, 68, 0.85); border-color: #fca5a5; }
+        }
+        .racecore-card {
+            background: radial-gradient(circle at top right, #18202c 0%, #0b0e14 65%, #07090d 100%);
+        }
+    </style>
+</head>
+<body class="min-h-screen telemetry-grid-bg selection:bg-amber-500 selection:text-black">
+
+    <!-- Top Navigation / Telemetry Header -->
+    <header class="sticky top-0 z-40 bg-telemetry-bg/95 backdrop-blur-md border-b border-telemetry-border">
+        <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="h-12 flex items-center justify-center">
+                    <img src="data:image/png;base64,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" alt="PV Project Performance Lab" class="h-11 w-auto block drop-shadow-[0_0_6px_rgba(245,158,11,0.35)]">
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white">DRAGLAB <span class="text-amber-500 font-mono">203M</span> PRO CALIBRATION</h1>
+                        <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-full">1000Hz / dt=1ms</span>
+                        <span id="headerSensorBadge" class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-500/15 text-amber-400 border border-amber-500/30 rounded-full">Sensor Lampu (28cm Rollout)</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Simulasi Fisika Numerik & Kalibrasi Telemetri Lintasan Nyata (Christmas Tree Photocell & Racecore GNSS)</p>
+                </div>
+            </div>
+
+            <!-- Quick Summary Pills -->
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-lg px-3 py-1.5 flex items-center gap-2">
+                    <span class="text-[11px] text-slate-400">PWR/WEIGHT:</span>
+                    <span id="headerPwrWeight" class="text-xs font-mono font-bold text-amber-400">165.0 HP/Ton</span>
+                </div>
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-lg px-3 py-1.5 flex items-center gap-2">
+                    <span class="text-[11px] text-slate-400">SHIFT / LIMIT:</span>
+                    <span id="headerRpmSummary" class="text-xs font-mono font-bold text-cyan-400">12800 / 13800 RPM</span>
+                </div>
+                <button id="btnResetDefaults" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left text-amber-400"></i> Reset Default
+                </button>
+                <button id="btnCopyReport" class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition flex items-center gap-1.5 shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-copy"></i> Salin Time Slip
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-[1600px] mx-auto px-4 sm:px-6 py-5 space-y-5">
+
+        <!-- PRESET SELECTOR BAR -->
+        <div class="bg-telemetry-panel border border-telemetry-border rounded-2xl p-3.5 sm:p-4 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                    <i class="fa-solid fa-sliders text-sm"></i>
+                </div>
+                <div>
+                    <h2 class="text-xs font-extrabold uppercase tracking-wider text-white">Preset Kalibrasi Cepat (Quick Setup)</h2>
+                    <p class="text-[11px] text-slate-400">Pilih profil spesifikasi motor & lintasan atau ubah setiap parameter secara manual di bawah.</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 w-full md:w-auto">
+                <button type="button" id="btnPreset1" class="preset-btn active-preset px-3.5 py-2 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-left transition">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs font-extrabold text-amber-400">Preset 1: Drag Strip 33 HP</span>
+                        <span class="text-[10px] font-mono bg-amber-500 text-black font-bold px-1.5 py-0.5 rounded">60ft ~1.80s</span>
+                    </div>
+                    <div class="text-[10px] font-mono text-slate-300 mt-0.5">200kg | Shift 12.8k / Limit 13.8k RPM</div>
+                </button>
+                <button type="button" id="btnPreset2" class="preset-btn px-3.5 py-2 rounded-xl border border-telemetry-border bg-telemetry-card hover:border-cyan-500/50 text-left transition">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs font-extrabold text-white">Preset 2: Standar 30 HP</span>
+                        <span class="text-[10px] font-mono bg-slate-800 text-cyan-400 font-bold px-1.5 py-0.5 rounded">Base Spec</span>
+                    </div>
+                    <div class="text-[10px] font-mono text-slate-400 mt-0.5">200kg | Primer 22/70 | Final 13/41</div>
+                </button>
+                <button type="button" id="btnPreset3" class="preset-btn px-3.5 py-2 rounded-xl border border-telemetry-border bg-telemetry-card hover:border-emerald-500/50 text-left transition">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="text-xs font-extrabold text-white">Preset 3: Kompetisi 38 HP</span>
+                        <span class="text-[10px] font-mono bg-slate-800 text-emerald-400 font-bold px-1.5 py-0.5 rounded">185 kg</span>
+                    </div>
+                    <div class="text-[10px] font-mono text-slate-400 mt-0.5">Primer 22/72 | Shift 13.2k / Limit 14.2k</div>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- LEFT COLUMN: INPUT PARAMETERS (4 Columns on large screens) -->
+            <section class="lg:col-span-4 space-y-5">
+
+                <!-- 1. Transmission Shift Delay Selector -->
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-2xl p-4 sm:p-5 shadow-xl">
+                    <div class="flex items-center justify-between mb-3">
+                        <h2 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                            <i class="fa-solid fa-bolt text-amber-500"></i> Sistem Transmisi & Jeda Gigi
+                        </h2>
+                        <span class="text-[11px] font-mono text-amber-400" id="activeShiftDelayBadge">70 ms</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mb-3">Selama jeda perpindahan gigi, aliran torsi ke roda terputus (<span class="font-mono text-slate-300">F_drive = 0 N</span>) sehingga motor mengalami deselerasi akibat hambatan angin & ban.</p>
+
+                    <div class="grid grid-cols-3 gap-2.5 mb-3">
+                        <button type="button" data-mode="clutch" class="trans-mode-btn group relative flex flex-col items-center justify-center p-3 rounded-xl border border-telemetry-border bg-telemetry-card hover:border-red-500/60 transition text-center">
+                            <span class="w-2.5 h-2.5 rounded-full bg-red-500 mb-1.5"></span>
+                            <span class="text-xs font-bold text-white">Kopling</span>
+                            <span class="text-[11px] font-mono text-red-400 font-semibold" id="lblClutchMs">200 ms</span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">Manual</span>
+                        </button>
+                        <button type="button" data-mode="quickshifter" class="trans-mode-btn active-mode group relative flex flex-col items-center justify-center p-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 transition text-center">
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400 mb-1.5"></span>
+                            <span class="text-xs font-bold text-white">Quickshifter</span>
+                            <span class="text-[11px] font-mono text-amber-400 font-semibold" id="lblQsMs">70 ms</span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">ECU Cut</span>
+                        </button>
+                        <button type="button" data-mode="matic" class="trans-mode-btn group relative flex flex-col items-center justify-center p-3 rounded-xl border border-telemetry-border bg-telemetry-card hover:border-emerald-500/60 transition text-center">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 mb-1.5"></span>
+                            <span class="text-xs font-bold text-white">Sistem Matic</span>
+                            <span class="text-[11px] font-mono text-emerald-400 font-semibold" id="lblMaticMs">50 ms</span>
+                            <span class="text-[10px] text-slate-400 mt-0.5">Seamless</span>
+                        </button>
+                    </div>
+
+                    <!-- Custom Shift Times Input -->
+                    <div class="grid grid-cols-3 gap-2 pt-2 border-t border-telemetry-border/60">
+                        <div>
+                            <label class="block text-[10px] font-mono text-slate-400 mb-1">Jeda Kopling (ms)</label>
+                            <input type="number" id="inpDelayClutch" value="200" min="0" max="1000" step="5" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-2.5 py-1.5 text-xs font-mono text-red-400 focus:outline-none focus:border-red-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-mono text-slate-400 mb-1">Jeda QS (ms)</label>
+                            <input type="number" id="inpDelayQs" value="70" min="0" max="1000" step="5" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-2.5 py-1.5 text-xs font-mono text-amber-400 focus:outline-none focus:border-amber-500">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-mono text-slate-400 mb-1">Jeda Matic (ms)</label>
+                            <input type="number" id="inpDelayMatic" value="50" min="0" max="1000" step="5" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-2.5 py-1.5 text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Engine, Separate Shift RPM vs Limit RPM, Mass & Wheel -->
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <i class="fa-solid fa-fire-flame-curved text-amber-500"></i> Mesin, Shift RPM vs Limit RPM & Bobot
+                    </h2>
+
+                    <!-- Horsepower & Power Mode -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs text-slate-300 font-medium mb-1">Horsepower Puncak (HP)</label>
+                            <div class="relative">
+                                <input type="number" id="inpHp" value="33" min="5" max="500" step="0.5" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg pl-3 pr-10 py-2 text-sm font-mono font-bold text-amber-400 focus:outline-none focus:border-amber-500">
+                                <span class="absolute right-3 top-2 text-xs font-mono text-slate-500">HP</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs text-slate-300 font-medium mb-1">Efisiensi Transmisi</label>
+                            <select id="inpHpType" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-2.5 py-2 text-xs font-mono text-slate-200 focus:outline-none focus:border-amber-500">
+                                <option value="1.00">Wheel HP Murni (100%)</option>
+                                <option value="0.95" selected>Drag Chain Spec (&eta; = 95%)</option>
+                                <option value="0.92">On-Crank Dyno (&eta; = 92%)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Engine RPM Characteristics (SEPARATED SHIFT RPM & LIMIT RPM) -->
+                    <div class="bg-telemetry-card border border-telemetry-border rounded-xl p-3 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-200">Konfigurasi Putaran Mesin (RPM)</span>
+                            <span class="text-[10px] font-mono text-slate-400">Terpisah: Oper Gigi vs Limiter</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2.5">
+                            <div>
+                                <label class="block text-[11px] text-slate-300 mb-1">Peak Power RPM</label>
+                                <input type="number" id="inpPeakRpm" value="11500" min="4000" max="20000" step="100" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-2.5 py-1.5 text-xs font-mono font-semibold text-white focus:outline-none focus:border-amber-500">
+                                <span class="text-[10px] text-slate-500">Titik HP Maksimum</span>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-300 mb-1">Launch RPM (Start)</label>
+                                <input type="number" id="inpLaunchRpm" value="9500" min="2000" max="16000" step="100" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-2.5 py-1.5 text-xs font-mono font-semibold text-cyan-400 focus:outline-none focus:border-cyan-500">
+                                <span class="text-[10px] text-slate-500">RPM Lepas Kopling</span>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-amber-400 font-semibold mb-1">Shift RPM (Gigi 1–5)</label>
+                                <input type="number" id="inpShiftRpm" value="12800" min="4500" max="22000" step="100" class="sim-input w-full bg-telemetry-bg border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-amber-400 focus:outline-none focus:border-amber-500">
+                                <span class="text-[10px] text-slate-400">Titik Oper Gigi 1 s/d 5</span>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-red-400 font-semibold mb-1">Limit RPM (Rev Limiter)</label>
+                                <input type="number" id="inpLimitRpm" value="13800" min="4500" max="23000" step="100" class="sim-input w-full bg-telemetry-bg border border-red-500/50 rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold text-red-400 focus:outline-none focus:border-red-500">
+                                <span class="text-[10px] text-slate-400">Batas ECU Cut / Gigi 6</span>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Warning Box for Shift RPM vs Limit RPM -->
+                        <div id="rpmWarningBanner" class="hidden rounded-lg p-2.5 text-[11px] font-mono border"></div>
+                    </div>
+
+                    <!-- Mass Breakdown: Bike + Rider -->
+                    <div class="pt-2 border-t border-telemetry-border/60">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs font-medium text-slate-300">Bobot Keseluruhan</span>
+                            <span class="text-xs font-mono font-bold text-emerald-400" id="lblTotalMass">200.0 kg</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] text-slate-400 mb-1">Bobot Motor (kg)</label>
+                                <input type="number" id="inpBikeMass" value="130" min="40" max="400" step="1" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] text-slate-400 mb-1">Bobot Rider (kg)</label>
+                                <input type="number" id="inpRiderMass" value="70" min="30" max="200" step="1" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-3 py-1.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wheel Diameter -->
+                    <div class="pt-2 border-t border-telemetry-border/60">
+                        <div class="grid grid-cols-2 gap-3 items-center">
+                            <div>
+                                <label class="block text-xs text-slate-300 font-medium mb-1">Diameter Roda Belakang</label>
+                                <div class="relative">
+                                    <input type="number" id="inpWheelDia" value="584" min="300" max="800" step="1" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg pl-3 pr-12 py-1.5 text-xs font-mono font-bold text-cyan-400 focus:outline-none focus:border-amber-500">
+                                    <span class="absolute right-3 top-1.5 text-xs font-mono text-slate-500">mm</span>
+                                </div>
+                            </div>
+                            <div class="bg-telemetry-card border border-telemetry-border rounded-lg p-2 text-[11px] font-mono text-slate-400">
+                                <div>Jari-jari (r): <span id="lblWheelRadius" class="text-white">0.292 m</span></div>
+                                <div>Keliling: <span id="lblWheelCirc" class="text-white">1.835 m</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Drivetrain & 6-Speed Gearbox Ratios -->
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <i class="fa-solid fa-gears text-amber-500"></i> Reduksi Primer, Final Gear & Rasio 1-6
+                    </h2>
+
+                    <!-- Primary Reduction & Final Sprocket -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-telemetry-card border border-telemetry-border rounded-xl p-3">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-[11px] font-semibold text-slate-300">Gigi Primer</span>
+                                <span id="lblPrimaryRatio" class="text-[11px] font-mono font-bold text-amber-400">3.182</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                <div>
+                                    <label class="block text-[10px] text-slate-400">Kruk As (T)</label>
+                                    <input type="number" id="inpPrimDrive" value="22" min="10" max="50" step="1" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-2 py-1 text-xs font-mono text-white text-center">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400">Kopling (T)</label>
+                                    <input type="number" id="inpPrimDriven" value="70" min="30" max="120" step="1" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-2 py-1 text-xs font-mono text-white text-center">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-telemetry-card border border-telemetry-border rounded-xl p-3">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-[11px] font-semibold text-slate-300">Final Gear</span>
+                                <span id="lblFinalRatio" class="text-[11px] font-mono font-bold text-cyan-400">3.154</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-1.5">
+                                <div>
+                                    <label class="block text-[10px] text-slate-400">Depan (T)</label>
+                                    <input type="number" id="inpFrontSprocket" value="13" min="10" max="22" step="1" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-2 py-1 text-xs font-mono text-white text-center">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] text-slate-400">Belakang (T)</label>
+                                    <input type="number" id="inpRearSprocket" value="41" min="25" max="65" step="1" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-2 py-1 text-xs font-mono text-white text-center">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6-Speed Transmission Ratios -->
+                    <div>
+                        <div class="flex items-center justify-between text-[11px] text-slate-400 mb-2 px-1">
+                            <span>Gigi Transmisi (Drive / Driven)</span>
+                            <span>Reduksi (Driven/Drive)</span>
+                        </div>
+                        <div class="space-y-2">
+                            <!-- Gear 1 -->
+                            <div class="grid grid-cols-12 gap-2 items-center bg-telemetry-card/70 border border-telemetry-border/80 rounded-lg px-2.5 py-1.5">
+                                <span class="col-span-3 text-xs font-bold text-slate-200">Rasio 1</span>
+                                <div class="col-span-6 flex items-center gap-1.5">
+                                    <input type="number" id="g1Drive" value="10" min="8" max="40" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                    <span class="text-slate-500 font-mono">/</span>
+                                    <input type="number" id="g1Driven" value="27" min="10" max="45" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                </div>
+                                <span id="lblRatio1" class="col-span-3 text-right text-xs font-mono text-amber-400 font-semibold">2.700</span>
+                            </div>
+                            <!-- Gear 2 -->
+                            <div class="grid grid-cols-12 gap-2 items-center bg-telemetry-card/70 border border-telemetry-border/80 rounded-lg px-2.5 py-1.5">
+                                <span class="col-span-3 text-xs font-bold text-slate-200">Rasio 2</span>
+                                <div class="col-span-6 flex items-center gap-1.5">
+                                    <input type="number" id="g2Drive" value="17" min="8" max="40" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                    <span class="text-slate-500 font-mono">/</span>
+                                    <input type="number" id="g2Driven" value="29" min="10" max="45" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                </div>
+                                <span id="lblRatio2" class="col-span-3 text-right text-xs font-mono text-amber-400 font-semibold">1.706</span>
+                            </div>
+                            <!-- Gear 3 -->
+                            <div class="grid grid-cols-12 gap-2 items-center bg-telemetry-card/70 border border-telemetry-border/80 rounded-lg px-2.5 py-1.5">
+                                <span class="col-span-3 text-xs font-bold text-slate-200">Rasio 3</span>
+                                <div class="col-span-6 flex items-center gap-1.5">
+                                    <input type="number" id="g3Drive" value="20" min="8" max="40" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                    <span class="text-slate-500 font-mono">/</span>
+                                    <input type="number" id="g3Driven" value="26" min="10" max="45" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                </div>
+                                <span id="lblRatio3" class="col-span-3 text-right text-xs font-mono text-amber-400 font-semibold">1.300</span>
+                            </div>
+                            <!-- Gear 4 -->
+                            <div class="grid grid-cols-12 gap-2 items-center bg-telemetry-card/70 border border-telemetry-border/80 rounded-lg px-2.5 py-1.5">
+                                <span class="col-span-3 text-xs font-bold text-slate-200">Rasio 4</span>
+                                <div class="col-span-6 flex items-center gap-1.5">
+                                    <input type="number" id="g4Drive" value="24" min="8" max="40" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                    <span class="text-slate-500 font-mono">/</span>
+                                    <input type="number" id="g4Driven" value="24" min="10" max="45" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                </div>
+                                <span id="lblRatio4" class="col-span-3 text-right text-xs font-mono text-amber-400 font-semibold">1.000</span>
+                            </div>
+                            <!-- Gear 5 -->
+                            <div class="grid grid-cols-12 gap-2 items-center bg-telemetry-card/70 border border-telemetry-border/80 rounded-lg px-2.5 py-1.5">
+                                <span class="col-span-3 text-xs font-bold text-slate-200">Rasio 5</span>
+                                <div class="col-span-6 flex items-center gap-1.5">
+                                    <input type="number" id="g5Drive" value="21" min="8" max="40" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                    <span class="text-slate-500 font-mono">/</span>
+                                    <input type="number" id="g5Driven" value="20" min="10" max="45" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                </div>
+                                <span id="lblRatio5" class="col-span-3 text-right text-xs font-mono text-amber-400 font-semibold">0.952</span>
+                            </div>
+                            <!-- Gear 6 -->
+                            <div class="grid grid-cols-12 gap-2 items-center bg-telemetry-card/70 border border-telemetry-border/80 rounded-lg px-2.5 py-1.5">
+                                <span class="col-span-3 text-xs font-bold text-slate-200">Rasio 6</span>
+                                <div class="col-span-6 flex items-center gap-1.5">
+                                    <input type="number" id="g6Drive" value="22" min="8" max="40" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                    <span class="text-slate-500 font-mono">/</span>
+                                    <input type="number" id="g6Driven" value="19" min="10" max="45" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded px-1.5 py-1 text-xs font-mono text-center text-white">
+                                </div>
+                                <span id="lblRatio6" class="col-span-3 text-right text-xs font-mono text-amber-400 font-semibold">0.864</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Launch Physics (0-60ft Calibration), Aerodynamics & Track Environment -->
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                        <i class="fa-solid fa-road-circle-check text-emerald-400"></i> Kalibrasi Start (0–60ft), Angin & Lintasan
+                    </h2>
+
+                    <!-- Mode Sensor Start (Rollout) -->
+                    <div>
+                        <label class="block text-xs text-slate-300 font-medium mb-1">Mode Sensor Start (Stage Rollout)</label>
+                        <select id="inpRolloutMode" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-3 py-2 text-xs font-mono text-emerald-400 focus:outline-none focus:border-emerald-500">
+                            <option value="0.28" selected>Sensor Lampu Drag (Stage Rollout 28cm)</option>
+                            <option value="0.00">True Zero Start (0.00m tanpa Rollout)</option>
+                        </select>
+                        <p class="text-[10px] text-slate-400 mt-1">Pada sensor lampu drag, timer mulai menghitung saat ban depan keluar dari sinar stage (~28 cm).</p>
+                    </div>
+
+                    <!-- Launch Grip & Flywheel Impulse -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] text-slate-300 font-medium mb-1">Max Launch Grip (G-Force)</label>
+                            <div class="relative">
+                                <input type="number" id="inpTireMu" value="1.25" min="0.50" max="2.00" step="0.05" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg pl-3 pr-8 py-1.5 text-xs font-mono font-bold text-emerald-400 focus:outline-none focus:border-emerald-500">
+                                <span class="absolute right-2.5 top-1.5 text-[11px] font-mono text-slate-500">G</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-slate-300 font-medium mb-1">Flywheel & Slip Impulse</label>
+                            <div class="relative">
+                                <input type="number" id="inpFlywheelImpulse" value="100" min="0" max="200" step="10" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg pl-3 pr-8 py-1.5 text-xs font-mono font-bold text-amber-400 focus:outline-none focus:border-amber-500">
+                                <span class="absolute right-2.5 top-1.5 text-[11px] font-mono text-slate-500">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Wind Speed, Track Slope & Track Length -->
+                    <div class="grid grid-cols-3 gap-2.5 pt-2 border-t border-telemetry-border/60">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Angin Headwind</label>
+                            <div class="relative">
+                                <input type="number" id="inpWindSpeed" value="5" min="-50" max="80" step="0.5" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg pl-2 pr-9 py-1.5 text-xs font-mono font-bold text-cyan-400">
+                                <span class="absolute right-1.5 top-1.5 text-[9px] font-mono text-slate-500">km/h</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Slope / Kemiringan</label>
+                            <div class="relative">
+                                <input type="number" id="inpTrackSlope" value="0.0" min="-10" max="10" step="0.1" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg pl-2 pr-7 py-1.5 text-xs font-mono font-bold text-white">
+                                <span class="absolute right-2 top-1.5 text-[10px] font-mono text-slate-500">%</span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Panjang Track</label>
+                            <div class="relative">
+                                <input type="number" id="inpTrackLength" value="203" min="60" max="1000" step="1" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg pl-2 pr-7 py-1.5 text-xs font-mono font-bold text-amber-400">
+                                <span class="absolute right-2 top-1.5 text-[10px] font-mono text-slate-500">m</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2.5 pt-1">
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Drag Area Cd&middot;A (m&sup2;)</label>
+                            <input type="number" id="inpCdA" value="0.30" min="0.15" max="0.80" step="0.01" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-2.5 py-1 text-xs font-mono text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Rolling Resistance (Crr)</label>
+                            <input type="number" id="inpCrr" value="0.014" min="0.005" max="0.050" step="0.001" class="sim-input w-full bg-telemetry-bg border border-telemetry-border rounded-lg px-2.5 py-1 text-xs font-mono text-white">
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+
+            <!-- RIGHT COLUMN: TELEMETRY, TIME SLIP, VISUAL RACE & CHARTS (8 Columns on large screens) -->
+            <section class="lg:col-span-8 space-y-6">
+
+                <!-- 1. PRIMARY TIME SLIP & CHECKPOINT TELEMETRY (60ft, 100m, 150m, 201m, 203m) -->
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-2xl p-4 sm:p-6 shadow-2xl">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                <h2 class="text-base sm:text-lg font-extrabold uppercase tracking-wide text-white">Laporan Data Telemetri Resmi (Time Slip)</h2>
+                            </div>
+                            <p class="text-xs text-slate-400">Mode aktif: <strong id="lblActiveModeTitle" class="text-amber-400 font-mono">Quickshifter (70 ms)</strong> &bull; <span id="lblRolloutActive" class="text-emerald-400 font-mono">Stage Rollout 28cm</span></p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 bg-telemetry-card border border-telemetry-border px-3 py-1.5 rounded-xl text-xs font-mono">
+                            <span class="text-slate-400">0–100 km/h:</span>
+                            <span id="lblZeroToHundred" class="font-bold text-amber-400">4.32 s</span>
+                            <span class="text-slate-600">|</span>
+                            <span class="text-slate-400">Top Speed:</span>
+                            <span id="lblTopSpeedSummary" class="font-bold text-cyan-400">131.4 km/h</span>
+                            <span class="text-slate-600">|</span>
+                            <span id="lblGear6StatusBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">G6 AMAN</span>
+                        </div>
+                    </div>
+
+                    <!-- 5 Required Checkpoint Cards: 60ft, 100m, 150m, 201m, 203m -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6" id="checkpointCardsContainer">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+
+                    <!-- HEAD-TO-HEAD COMPARISON TABLE (Kopling 200ms vs Quickshifter 70ms vs Matic 50ms) -->
+                    <div class="bg-telemetry-card/90 border border-telemetry-border rounded-xl overflow-hidden">
+                        <div class="px-4 py-3 bg-slate-900/80 border-b border-telemetry-border flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-table-list text-amber-400 text-xs"></i>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-200">Komparasi Langsung: Kopling vs Quickshifter vs Sistem Matic</h3>
+                            </div>
+                            <span id="lblGapSummary" class="text-[11px] font-mono text-emerald-400">Selisih Finish 203m: -0.210 dtk</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-telemetry-border text-[11px] font-mono uppercase text-slate-400 bg-telemetry-bg/50">
+                                        <th class="py-2.5 px-3">Titik Pengukuran</th>
+                                        <th class="py-2.5 px-3 text-red-400">Kopling (<span class="lblClutchHdr">200</span>ms)</th>
+                                        <th class="py-2.5 px-3 text-amber-400">Quickshifter (<span class="lblQsHdr">70</span>ms)</th>
+                                        <th class="py-2.5 px-3 text-emerald-400">Sistem Matic (<span class="lblMaticHdr">50</span>ms)</th>
+                                        <th class="py-2.5 px-3 text-right text-cyan-400">Selisih (Matic vs Kopling)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="comparisonTableBody" class="divide-y divide-telemetry-border/60 text-xs font-mono">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. LIVE 203M DRAG STRIP RACE ANIMATION & DIGITAL DYNO DASHBOARD -->
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-base font-extrabold uppercase tracking-wide text-white flex items-center gap-2">
+                                <i class="fa-solid fa-flag-checkered text-amber-500"></i> Visualisasi Lintasan Balap 203m (Real-Time 3 Jalur)
+                            </h2>
+                            <p class="text-xs text-slate-400">Perhatikan indikator <span class="text-amber-400 font-semibold">SHIFT RPM</span> (kuning) dan <span class="text-red-400 font-semibold">LIMIT RPM</span> (merah) pada bar tachometer saat motor melaju.</p>
+                        </div>
+
+                        <!-- Playback Controls -->
+                        <div class="flex items-center gap-2">
+                            <select id="selSimSpeed" class="bg-telemetry-card border border-telemetry-border rounded-lg px-2.5 py-1.5 text-xs font-mono text-slate-200 focus:outline-none">
+                                <option value="1">Speed: 1.0x (Real-Time)</option>
+                                <option value="0.5">Speed: 0.5x (Slow-Mo)</option>
+                                <option value="0.25">Speed: 0.25x (Ultra Slow)</option>
+                            </select>
+                            <button id="btnStartRace" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-black font-extrabold text-xs uppercase tracking-wider transition flex items-center gap-1.5 shadow-lg shadow-emerald-500/20">
+                                <i class="fa-solid fa-play"></i> Start Drag Race
+                            </button>
+                            <button id="btnResetRace" class="px-3 py-1.5 rounded-lg bg-telemetry-card hover:bg-slate-800 text-slate-300 border border-telemetry-border text-xs font-mono transition">
+                                <i class="fa-solid fa-rotate-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Live Digital Dashboard Instrument Cluster -->
+                    <div class="grid grid-cols-2 sm:grid-cols-6 gap-2.5 bg-telemetry-bg border border-telemetry-border rounded-xl p-3">
+                        <div class="bg-telemetry-card border border-telemetry-border rounded-lg p-2.5 text-center">
+                            <span class="block text-[10px] font-mono uppercase text-slate-400">Waktu Resmi (ET)</span>
+                            <span id="dashTime" class="text-lg sm:text-xl font-mono font-extrabold text-white">0.000<small class="text-xs text-slate-400 ml-0.5">s</small></span>
+                        </div>
+                        <div class="bg-telemetry-card border border-telemetry-border rounded-lg p-2.5 text-center">
+                            <span class="block text-[10px] font-mono uppercase text-slate-400">Kecepatan</span>
+                            <span id="dashSpeed" class="text-lg sm:text-xl font-mono font-extrabold text-cyan-400">0.0<small class="text-xs text-slate-400 ml-0.5">km/h</small></span>
+                        </div>
+                        <div class="bg-telemetry-card border border-telemetry-border rounded-lg p-2.5 text-center">
+                            <span class="block text-[10px] font-mono uppercase text-slate-400">Jarak Tempuh</span>
+                            <span id="dashDist" class="text-lg sm:text-xl font-mono font-extrabold text-amber-400">0.0<small class="text-xs text-slate-400 ml-0.5">m</small></span>
+                        </div>
+                        <div class="bg-telemetry-card border border-telemetry-border rounded-lg p-2.5 text-center">
+                            <span class="block text-[10px] font-mono uppercase text-slate-400">Posisi Gigi</span>
+                            <span id="dashGear" class="text-lg sm:text-xl font-mono font-extrabold text-emerald-400">GEAR 1</span>
+                        </div>
+                        <div class="bg-telemetry-card border border-telemetry-border rounded-lg p-2.5 text-center">
+                            <span class="block text-[10px] font-mono uppercase text-slate-400">Putaran Mesin</span>
+                            <span id="dashRpm" class="text-lg sm:text-xl font-mono font-extrabold text-white">9500<small class="text-[10px] text-slate-400 ml-0.5">RPM</small></span>
+                        </div>
+                        <div id="dashStatusBox" class="bg-telemetry-card border border-telemetry-border rounded-lg p-2.5 text-center flex flex-col justify-center">
+                            <span class="block text-[10px] font-mono uppercase text-slate-400">Status Mesin</span>
+                            <span id="dashStatusText" class="text-xs font-mono font-extrabold text-emerald-400 uppercase">READY STAGE</span>
+                        </div>
+                    </div>
+
+                    <!-- TACHOMETER RPM BAR WITH SEPARATE SHIFT RPM (YELLOW) & LIMIT RPM (RED) MARKERS -->
+                    <div class="bg-telemetry-bg border border-telemetry-border rounded-xl p-3 space-y-1.5">
+                        <div class="flex items-center justify-between text-[11px] font-mono">
+                            <span class="text-slate-400">TACHOMETER BAR (0 – <span id="lblGaugeMaxRpm">15000</span> RPM)</span>
+                            <div class="flex items-center gap-4">
+                                <span class="flex items-center gap-1.5 text-amber-400 font-bold">
+                                    <span class="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block"></span>
+                                    SHIFT RPM: <span id="lblBarShiftRpm">12800</span>
+                                </span>
+                                <span class="flex items-center gap-1.5 text-red-400 font-bold">
+                                    <span class="w-2.5 h-2.5 rounded-sm bg-red-500 inline-block"></span>
+                                    LIMIT RPM: <span id="lblBarLimitRpm">13800</span>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="relative w-full h-5 bg-slate-900 rounded-lg overflow-hidden border border-telemetry-border">
+                            <div id="rpmBarFill" class="h-full bg-gradient-to-r from-emerald-500 via-amber-400 to-red-500 transition-all duration-75" style="width: 60%;"></div>
+                            <!-- Shift RPM Marker Line -->
+                            <div id="rpmBarShiftLine" class="absolute top-0 bottom-0 w-0.5 bg-amber-300 shadow-[0_0_6px_#f59e0b] z-10" style="left: 82%;">
+                                <span class="absolute -top-0.5 -translate-x-1/2 px-1 bg-amber-400 text-black text-[8px] font-mono font-extrabold rounded-b">SHIFT</span>
+                            </div>
+                            <!-- Limit RPM Marker Line -->
+                            <div id="rpmBarLimitLine" class="absolute top-0 bottom-0 w-1 bg-red-500 shadow-[0_0_8px_#ef4444] z-20" style="left: 90%;">
+                                <span class="absolute -top-0.5 -translate-x-1/2 px-1 bg-red-600 text-white text-[8px] font-mono font-extrabold rounded-b">LIMIT</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Scrubber / Timeline Slider -->
+                    <div class="flex items-center gap-3 px-1">
+                        <span class="text-[11px] font-mono text-slate-400 whitespace-nowrap">Scrub Waktu:</span>
+                        <input type="range" id="raceTimeScrubber" min="0" max="10" step="0.01" value="0" class="w-full accent-amber-500 cursor-pointer h-1.5 bg-slate-800 rounded-lg">
+                        <span id="lblScrubTime" class="text-xs font-mono text-amber-400 w-16 text-right">0.00s</span>
+                    </div>
+
+                    <!-- Drag Strip Canvas -->
+                    <div class="relative w-full h-[230px] bg-telemetry-bg border border-telemetry-border rounded-xl overflow-hidden">
+                        <canvas id="raceTrackCanvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- 3. INTERACTIVE TELEMETRY CHARTS & GEARBOX TABLE (SHIFT RPM VS LIMIT RPM) -->
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-2xl p-4 sm:p-6 shadow-2xl space-y-5">
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div>
+                            <h2 class="text-base font-extrabold uppercase tracking-wide text-white flex items-center gap-2">
+                                <i class="fa-solid fa-chart-line text-cyan-400"></i> Grafik Telemetri & Kalkulasi Kecepatan Tiap Gigi
+                            </h2>
+                            <p class="text-xs text-slate-400">Geser kursor pada grafik untuk melihat detail Kecepatan, RPM, Titik Shift RPM, dan Batas Limit RPM.</p>
+                        </div>
+
+                        <!-- Chart Mode Tabs -->
+                        <div class="flex flex-wrap gap-1.5 bg-telemetry-bg p-1 rounded-xl border border-telemetry-border">
+                            <button type="button" data-chart="speed_dist" class="chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-amber-500 text-black transition">
+                                Speed vs Jarak
+                            </button>
+                            <button type="button" data-chart="speed_time" class="chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-slate-300 hover:text-white transition">
+                                Speed vs Waktu
+                            </button>
+                            <button type="button" data-chart="rpm" class="chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-slate-300 hover:text-white transition">
+                                Kurva RPM (Shift & Limit)
+                            </button>
+                            <button type="button" data-chart="force" class="chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-slate-300 hover:text-white transition">
+                                Gaya Dorong vs Hambatan
+                            </button>
+                            <button type="button" data-chart="dyno" class="chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-slate-300 hover:text-white transition">
+                                Kurva Dyno (HP & Torsi)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Telemetry Chart Canvas -->
+                    <div class="relative w-full h-[320px] bg-telemetry-bg border border-telemetry-border rounded-xl overflow-hidden p-2">
+                        <canvas id="telemetryChartCanvas"></canvas>
+                    </div>
+
+                    <!-- 6-Speed Gearbox Speed & Ratio Breakdown Table (Separating Shift RPM & Limit RPM) -->
+                    <div class="bg-telemetry-card border border-telemetry-border rounded-xl overflow-hidden">
+                        <div class="px-4 py-2.5 bg-slate-900/70 border-b border-telemetry-border flex flex-wrap items-center justify-between gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Tabel Kalkulasi Rasio & Kecepatan Maksimal Tiap Gigi (1–6)</span>
+                            <span id="lblTotalBaseReduction" class="text-[11px] font-mono text-amber-400">Reduksi Primer &times; Final = 10.035</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-xs font-mono">
+                                <thead>
+                                    <tr class="border-b border-telemetry-border text-[11px] text-slate-400 bg-telemetry-bg/50">
+                                        <th class="py-2 px-3">Gigi</th>
+                                        <th class="py-2 px-3">Mata Gigi</th>
+                                        <th class="py-2 px-3">Rasio Gigi</th>
+                                        <th class="py-2 px-3">Rasio Total</th>
+                                        <th class="py-2 px-3">RPM Jatuh (Setelah Shift)</th>
+                                        <th class="py-2 px-3 text-right text-amber-400">Speed @ Shift RPM</th>
+                                        <th class="py-2 px-3 text-right text-red-400">Max Speed @ Limit RPM</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="gearboxAnalysisBody" class="divide-y divide-telemetry-border/60">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. COPY-PASTE TELEMETRY TEXT REPORT BOX -->
+                <div class="bg-telemetry-panel border border-telemetry-border rounded-2xl p-4 sm:p-6 shadow-2xl space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <h2 class="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
+                                <i class="fa-solid fa-file-lines text-amber-500"></i> Laporan Teks Telemetri Siap Copy-Paste
+                            </h2>
+                            <p class="text-xs text-slate-400">Format teks ringkas yang memuat spesifikasi mesin, pemisahan Shift RPM & Limit RPM, serta komparasi Time Slip 60ft–203m.</p>
+                        </div>
+                        <button type="button" id="btnCopyTextBox" class="px-3.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-copy"></i> Salin Laporan Teks
+                        </button>
+                    </div>
+                    <pre id="liveTextReportBox" class="w-full bg-telemetry-bg border border-telemetry-border rounded-xl p-4 text-[11px] sm:text-xs font-mono text-slate-200 overflow-x-auto leading-relaxed select-all"></pre>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- Toast Notification for Clipboard -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-emerald-500 text-black font-bold text-xs px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 pointer-events-none">
+        <i class="fa-solid fa-circle-check text-base"></i>
+        <span id="toastMessage">Laporan Time Slip berhasil disalin ke clipboard!</span>
+    </div>
+
+    <!-- COMPLETE 1000Hz PHYSICS ENGINE & INTERACTIVE TELEMETRY SCRIPT -->
+    <script>
+        /***********************************************************************
+         * 1. PRESETS & DEFAULT PARAMETERS (Separating Shift RPM & Limit RPM)
+         ***********************************************************************/
+        const PRESET_CONFIGS = {
+            preset1: {
+                name: 'Preset 1: Drag Strip 33 HP / 200kg',
+                hp: 33,
+                hpEfficiency: 0.95,
+                peakRpm: 11500,
+                shiftRpm: 12800,
+                limitRpm: 13800,
+                launchRpm: 9500,
+                bikeMass: 130,
+                riderMass: 70,
+                wheelDiaMm: 584,
+                primDrive: 22,
+                primDriven: 70,
+                frontSprocket: 13,
+                rearSprocket: 41,
+                gears: [
+                    { drive: 10, driven: 27 },
+                    { drive: 17, driven: 29 },
+                    { drive: 20, driven: 26 },
+                    { drive: 24, driven: 24 },
+                    { drive: 21, driven: 20 },
+                    { drive: 22, driven: 19 }
+                ],
+                delayClutchMs: 200,
+                delayQsMs: 70,
+                delayMaticMs: 50,
+                rolloutM: 0.28,
+                tireMu: 1.25,
+                flywheelImpulsePct: 100,
+                windSpeedKmh: 5,
+                trackSlopePct: 0.0,
+                trackLengthM: 203,
+                cdA: 0.30,
+                crr: 0.014
+            },
+            preset2: {
+                name: 'Preset 2: Standar 30 HP / 200kg',
+                hp: 30,
+                hpEfficiency: 0.92,
+                peakRpm: 11200,
+                shiftRpm: 12400,
+                limitRpm: 13400,
+                launchRpm: 8500,
+                bikeMass: 130,
+                riderMass: 70,
+                wheelDiaMm: 584,
+                primDrive: 22,
+                primDriven: 70,
+                frontSprocket: 13,
+                rearSprocket: 41,
+                gears: [
+                    { drive: 10, driven: 27 },
+                    { drive: 17, driven: 29 },
+                    { drive: 20, driven: 26 },
+                    { drive: 24, driven: 24 },
+                    { drive: 21, driven: 20 },
+                    { drive: 22, driven: 19 }
+                ],
+                delayClutchMs: 200,
+                delayQsMs: 70,
+                delayMaticMs: 50,
+                rolloutM: 0.28,
+                tireMu: 1.15,
+                flywheelImpulsePct: 80,
+                windSpeedKmh: 5,
+                trackSlopePct: 0.0,
+                trackLengthM: 203,
+                cdA: 0.32,
+                crr: 0.015
+            },
+            preset3: {
+                name: 'Preset 3: Kompetisi 38 HP / 185kg',
+                hp: 38,
+                hpEfficiency: 0.95,
+                peakRpm: 11800,
+                shiftRpm: 13200,
+                limitRpm: 14200,
+                launchRpm: 9800,
+                bikeMass: 130,
+                riderMass: 55,
+                wheelDiaMm: 584,
+                primDrive: 22,
+                primDriven: 72,
+                frontSprocket: 13,
+                rearSprocket: 41,
+                gears: [
+                    { drive: 10, driven: 27 },
+                    { drive: 17, driven: 29 },
+                    { drive: 20, driven: 26 },
+                    { drive: 24, driven: 24 },
+                    { drive: 21, driven: 20 },
+                    { drive: 22, driven: 19 }
+                ],
+                delayClutchMs: 200,
+                delayQsMs: 70,
+                delayMaticMs: 50,
+                rolloutM: 0.28,
+                tireMu: 1.30,
+                flywheelImpulsePct: 110,
+                windSpeedKmh: 5,
+                trackSlopePct: 0.0,
+                trackLengthM: 203,
+                cdA: 0.29,
+                crr: 0.014
+            }
+        };
+
+        let activeTransMode = 'quickshifter'; // 'clutch' | 'quickshifter' | 'matic'
+        let activeChartTab = 'speed_dist';    // 'speed_dist' | 'speed_time' | 'rpm' | 'force' | 'dyno'
+        let simulationResults = {
+            clutch: null,
+            quickshifter: null,
+            matic: null
+        };
+
+        // Animation state for live 203m drag strip race
+        let animState = {
+            running: false,
+            currentTime: 0,
+            maxTime: 10,
+            lastFrameTs: 0,
+            speedMultiplier: 1.0,
+            rafId: null
+        };
+
+        // Interactive hover state on telemetry chart
+        let chartHoverX = null;
+
+        /***********************************************************************
+         * 2. REAL-WORLD ENGINE DYNO CURVE & NUMERICAL PHYSICS ENGINE (dt = 1ms)
+         ***********************************************************************/
+        function getInputParams() {
+            const val = (id, fallback) => {
+                const el = document.getElementById(id);
+                if (!el) return fallback;
+                const v = parseFloat(el.value);
+                return isNaN(v) ? fallback : v;
+            };
+            return {
+                hp: Math.max(1, val('inpHp', 33)),
+                hpEfficiency: parseFloat(document.getElementById('inpHpType').value) || 0.95,
+                peakRpm: Math.max(3000, val('inpPeakRpm', 11500)),
+                shiftRpm: Math.max(3500, val('inpShiftRpm', 12800)),
+                limitRpm: Math.max(4000, val('inpLimitRpm', 13800)),
+                launchRpm: Math.max(1500, val('inpLaunchRpm', 9500)),
+                bikeMass: Math.max(20, val('inpBikeMass', 130)),
+                riderMass: Math.max(20, val('inpRiderMass', 70)),
+                wheelDiaMm: Math.max(200, val('inpWheelDia', 584)),
+                primDrive: Math.max(5, val('inpPrimDrive', 22)),
+                primDriven: Math.max(10, val('inpPrimDriven', 70)),
+                frontSprocket: Math.max(5, val('inpFrontSprocket', 13)),
+                rearSprocket: Math.max(10, val('inpRearSprocket', 41)),
+                gears: [
+                    { drive: Math.max(5, val('g1Drive', 10)), driven: Math.max(5, val('g1Driven', 27)) },
+                    { drive: Math.max(5, val('g2Drive', 17)), driven: Math.max(5, val('g2Driven', 29)) },
+                    { drive: Math.max(5, val('g3Drive', 20)), driven: Math.max(5, val('g3Driven', 26)) },
+                    { drive: Math.max(5, val('g4Drive', 24)), driven: Math.max(5, val('g4Driven', 24)) },
+                    { drive: Math.max(5, val('g5Drive', 21)), driven: Math.max(5, val('g5Driven', 20)) },
+                    { drive: Math.max(5, val('g6Drive', 22)), driven: Math.max(5, val('g6Driven', 19)) }
+                ],
+                delayClutchMs: Math.max(0, val('inpDelayClutch', 200)),
+                delayQsMs: Math.max(0, val('inpDelayQs', 70)),
+                delayMaticMs: Math.max(0, val('inpDelayMatic', 50)),
+                rolloutM: parseFloat(document.getElementById('inpRolloutMode').value) || 0.0,
+                tireMu: Math.max(0.3, val('inpTireMu', 1.25)),
+                flywheelImpulsePct: Math.max(0, val('inpFlywheelImpulse', 100)),
+                windSpeedKmh: val('inpWindSpeed', 5),
+                trackSlopePct: val('inpTrackSlope', 0.0),
+                trackLengthM: Math.max(60, val('inpTrackLength', 203)),
+                cdA: Math.max(0.05, val('inpCdA', 0.30)),
+                crr: Math.max(0.001, val('inpCrr', 0.014))
+            };
+        }
+
+        /**
+         * Realistic Engine Power & Torque Curve Function
+         * Peak Power = P_max at peakRpm. Above peakRpm toward Limit RPM, volumetric efficiency tapers gently.
+         */
+        function calculateEnginePowerAndTorque(rpm, params) {
+            const safeRpm = Math.max(1500, rpm);
+            const x = safeRpm / params.peakRpm;
+            let normPower;
+
+            if (x <= 1.0) {
+                normPower = x * (0.35 + 1.30 * x - 0.65 * x * x);
+            } else {
+                const overRev = x - 1.0;
+                normPower = Math.max(0.25, 1.0 - 1.20 * overRev * overRev);
+            }
+
+            const currentHp = params.hp * Math.max(0.1, normPower);
+            const powerWatts = currentHp * 745.699872;
+            const torqueNm = (powerWatts * 60) / (2 * Math.PI * safeRpm);
+
+            return {
+                hp: currentHp,
+                powerWatts: powerWatts,
+                torqueNm: torqueNm
+            };
+        }
+
+        /**
+         * Runs the 1ms (1000 Hz) time-step numerical integration with separate Shift RPM vs Limit RPM
+         * and Stage Rollout calibration.
+         */
+        function simulateDragRun(params, shiftDelayMs, modeKey) {
+            const dt = 0.001; // 1 millisecond (1000 Hz)
+            const g = 9.80665;
+            const rho = 1.2041;
+
+            const totalMass = params.bikeMass + params.riderMass;
+            const wheelRadius = (params.wheelDiaMm / 1000) / 2;
+            const wheelCircumference = 2 * Math.PI * wheelRadius;
+
+            const primaryRatio = params.primDriven / params.primDrive;
+            const finalRatio = params.rearSprocket / params.frontSprocket;
+            const baseReduction = primaryRatio * finalRatio;
+
+            // Calculate total ratio, Speed @ Shift RPM, and Max Speed @ Limit RPM for each of the 6 gears
+            const gearData = params.gears.map((gObj, idx) => {
+                const gearRatio = gObj.driven / gObj.drive;
+                const totalRatio = baseReduction * gearRatio;
+                const speedAtShiftMps = (params.shiftRpm / 60 / totalRatio) * wheelCircumference;
+                const speedAtLimitMps = (params.limitRpm / 60 / totalRatio) * wheelCircumference;
+                return {
+                    gearNumber: idx + 1,
+                    drive: gObj.drive,
+                    driven: gObj.driven,
+                    gearRatio: gearRatio,
+                    totalRatio: totalRatio,
+                    speedAtShiftKmh: speedAtShiftMps * 3.6,
+                    speedAtLimitKmh: speedAtLimitMps * 3.6
+                };
+            });
+
+            const windSpeedMps = params.windSpeedKmh / 3.6;
+            const shiftDelaySec = shiftDelayMs / 1000;
+            const finishTargetDist = Math.max(params.trackLengthM, 203);
+            const rolloutM = params.rolloutM; // 0.28m for Drag Strip Stage Beam, 0.0m for True Zero
+
+            const targetDistances = [18.288, 100.0, 150.0, 201.0, params.trackLengthM];
+            const recordedCheckpoints = {};
+
+            // State Variables
+            let rawTime = 0.0;          // Time since initial clutch release at xRaw = 0
+            let rolloutCrossTime = (rolloutM <= 0) ? 0.0 : null;
+            let xRaw = 0.0;             // Raw distance from stage beam center
+            let xOfficial = -rolloutM;  // Official timed distance (0.000m when beam clears)
+            let v = 0.0;
+            let a = 0.0;
+            let currentGearIdx = 0;     // 0 = Gear 1
+            let shiftTimer = 0.0;
+            let limiterBounceTimer = 0.0;
+            let isShifting = false;
+            let isLimiterCut = false;
+            let hitLimiterInGear6 = false;
+            let hitLimiterBeforeShift = false;
+            let zeroToHundredTime = null;
+            let topSpeedKmh = 0;
+            let rpm = params.launchRpm;
+
+            let peakTorqueNm = 0;
+            let peakWheelForceN = 0;
+
+            const telemetry = [];
+            const maxSimTime = 35.0;
+
+            while (xOfficial < finishTargetDist && rawTime < maxSimTime) {
+                const prevXOfficial = xOfficial;
+                const prevXRaw = xRaw;
+                const prevV = v;
+                const prevRawTime = rawTime;
+                const prevOfficialTime = rolloutCrossTime !== null ? (rawTime - rolloutCrossTime) : 0.0;
+
+                const activeGear = gearData[currentGearIdx];
+                const iTotal = activeGear.totalRatio;
+
+                // Coupled engine RPM from rear wheel angular velocity
+                const wheelRadPerSec = v / wheelRadius;
+                const coupledRpm = (wheelRadPerSec * iTotal * 60) / (2 * Math.PI);
+
+                let fDrive = 0;
+                let currentTorque = 0;
+
+                // 1. Check if currently in Gear Shift interruption window
+                if (shiftTimer > 0) {
+                    isShifting = true;
+                    isLimiterCut = false;
+                    fDrive = 0;
+                    rpm = Math.max(params.launchRpm * 0.7, coupledRpm);
+                    shiftTimer -= dt;
+                    if (shiftTimer <= 0) {
+                        shiftTimer = 0;
+                        isShifting = false;
+                    }
+                } else {
+                    isShifting = false;
+
+                    // 2. Check Shift RPM & Limit RPM rules on Gears 1 to 5
+                    if (currentGearIdx < gearData.length - 1) {
+                        // If user sets Shift RPM > Limit RPM, the engine hits Limit RPM first and bounces briefly before shifting
+                        if (params.shiftRpm > params.limitRpm && coupledRpm >= params.limitRpm) {
+                            hitLimiterBeforeShift = true;
+                            if (limiterBounceTimer <= 0 && !isLimiterCut) {
+                                limiterBounceTimer = 0.035; // 35ms rev limiter cut bounce penalty
+                                isLimiterCut = true;
+                            }
+                        }
+
+                        if (limiterBounceTimer > 0) {
+                            limiterBounceTimer -= dt;
+                            fDrive = 0;
+                            rpm = params.limitRpm;
+                            if (limiterBounceTimer <= 0) {
+                                // Force shift after limiter bounce
+                                isLimiterCut = false;
+                                currentGearIdx++;
+                                if (shiftDelaySec > 0) {
+                                    shiftTimer = shiftDelaySec;
+                                    isShifting = true;
+                                    fDrive = 0;
+                                }
+                            }
+                        } else if (coupledRpm >= params.shiftRpm) {
+                            // Normal upshift triggered at Shift RPM
+                            currentGearIdx++;
+                            if (shiftDelaySec > 0) {
+                                shiftTimer = shiftDelaySec;
+                                isShifting = true;
+                                fDrive = 0;
+                            }
+                        }
+                    }
+
+                    // 3. Calculate Engine Drive Force when not shifting or bouncing
+                    if (!isShifting && limiterBounceTimer <= 0) {
+                        let effectiveRpm = coupledRpm;
+                        if (currentGearIdx === 0 && coupledRpm < params.launchRpm) {
+                            effectiveRpm = params.launchRpm;
+                        } else {
+                            effectiveRpm = Math.max(2500, coupledRpm);
+                        }
+
+                        // Check Rev Limiter (Limit RPM) in Gear 6 (or any gear)
+                        if (effectiveRpm >= params.limitRpm) {
+                            isLimiterCut = true;
+                            if (currentGearIdx === gearData.length - 1) {
+                                hitLimiterInGear6 = true;
+                            }
+                            fDrive = 0;
+                            rpm = params.limitRpm;
+                        } else {
+                            isLimiterCut = false;
+                            rpm = effectiveRpm;
+                            const eng = calculateEnginePowerAndTorque(rpm, params);
+                            currentTorque = eng.torqueNm;
+                            if (currentTorque > peakTorqueNm) peakTorqueNm = currentTorque;
+
+                            // Flywheel & Clutch Slip Kinetic Impulse during initial launch (first 14 meters)
+                            let launchImpulseMult = 1.0;
+                            if (currentGearIdx === 0 && xRaw < 14.0 && params.flywheelImpulsePct > 0) {
+                                const decay = Math.max(0, 1.0 - (xRaw / 14.0));
+                                launchImpulseMult = 1.0 + 0.28 * (params.flywheelImpulsePct / 100) * decay;
+                            }
+
+                            const rawForce = (currentTorque * launchImpulseMult * iTotal * params.hpEfficiency) / wheelRadius;
+
+                            // Tire longitudinal traction limit (Launch Grip G-Force)
+                            // Dynamic weight transfer boost in first 20m, tapering slightly at high speed
+                            const dynamicGripMu = xRaw < 22.0
+                                ? params.tireMu
+                                : Math.max(0.85, params.tireMu * 0.92);
+                            const maxTireForce = dynamicGripMu * totalMass * g;
+
+                            fDrive = Math.min(rawForce, maxTireForce);
+                            if (fDrive > peakWheelForceN) peakWheelForceN = fDrive;
+                        }
+                    }
+                }
+
+                // Aerodynamic Drag Force: F_aero = 0.5 * rho * CdA * (v + v_wind)^2
+                const vRel = v + windSpeedMps;
+                const fAero = 0.5 * rho * params.cdA * (vRel * Math.abs(vRel));
+
+                // Rolling Resistance Force: F_roll = Crr * m * g
+                const fRoll = (v > 0.001 || fDrive > 0) ? (params.crr * totalMass * g) : 0;
+
+                // Track Slope Gravity Component: F_slope = m * g * (slope% / 100)
+                const fSlope = (v > 0.001 || fDrive > 0) ? (totalMass * g * (params.trackSlopePct / 100)) : 0;
+
+                // Equivalent Rotational Mass Factor (wheels + crank/clutch inertia)
+                // Lightweight racing rotor/crank inertia factor
+                const wheelInertiaFactor = 0.032;
+                const engineInertiaCoeff = 0.000095;
+                const rotationalMassFactor = isShifting
+                    ? (1.0 + wheelInertiaFactor)
+                    : (1.0 + wheelInertiaFactor + engineInertiaCoeff * (iTotal * iTotal));
+
+                const effectiveMass = totalMass * rotationalMassFactor;
+
+                // Net Longitudinal Acceleration (m/s^2)
+                a = (fDrive - fAero - fRoll - fSlope) / effectiveMass;
+                if (v <= 0 && a < 0) a = 0;
+
+                // Kinematics step
+                v = Math.max(0, v + a * dt);
+                const avgV = 0.5 * (prevV + v);
+                xRaw = prevXRaw + avgV * dt;
+                xOfficial = xRaw - rolloutM;
+                rawTime = prevRawTime + dt;
+
+                const currentSpeedKmh = v * 3.6;
+                if (currentSpeedKmh > topSpeedKmh) topSpeedKmh = currentSpeedKmh;
+
+                // Detect Stage Rollout beam crossing (xOfficial transitions from < 0 to >= 0)
+                if (rolloutCrossTime === null && prevXOfficial < 0 && xOfficial >= 0) {
+                    const fracRoll = (0 - prevXOfficial) / Math.max(1e-9, (xOfficial - prevXOfficial));
+                    rolloutCrossTime = prevRawTime + fracRoll * dt;
+                }
+
+                const currentOfficialTime = rolloutCrossTime !== null ? Math.max(0, rawTime - rolloutCrossTime) : 0.0;
+
+                // Detect 0 - 100 km/h time (measured on official timer)
+                if (zeroToHundredTime === null && prevV * 3.6 < 100.0 && currentSpeedKmh >= 100.0 && rolloutCrossTime !== null) {
+                    const frac100 = (100.0 - prevV * 3.6) / Math.max(1e-9, (currentSpeedKmh - prevV * 3.6));
+                    zeroToHundredTime = prevOfficialTime + frac100 * dt;
+                }
+
+                // Record official checkpoints (60ft, 100m, 150m, 201m, 203m)
+                if (rolloutCrossTime !== null) {
+                    for (let d of targetDistances) {
+                        const key = d.toFixed(3);
+                        if (!recordedCheckpoints[key] && prevXOfficial < d && xOfficial >= d) {
+                            const frac = (d - prevXOfficial) / Math.max(1e-9, (xOfficial - prevXOfficial));
+                            const exactTime = prevOfficialTime + frac * dt;
+                            const exactSpeedMps = prevV + frac * (v - prevV);
+                            recordedCheckpoints[key] = {
+                                distanceM: d,
+                                timeSec: exactTime,
+                                speedKmh: exactSpeedMps * 3.6,
+                                gear: currentGearIdx + 1,
+                                rpm: Math.round(rpm)
+                            };
+                        }
+                    }
+                }
+
+                // Sample telemetry every 10ms after stage rollout clears
+                if (rolloutCrossTime !== null && (Math.round(rawTime * 1000) % 10 === 0 || xOfficial >= finishTargetDist)) {
+                    telemetry.push({
+                        t: currentOfficialTime,
+                        x: Math.max(0, xOfficial),
+                        vKmh: currentSpeedKmh,
+                        aG: a / g,
+                        rpm: rpm,
+                        gear: currentGearIdx + 1,
+                        isShifting: isShifting,
+                        isLimiterCut: isLimiterCut,
+                        fDrive: fDrive,
+                        fDragTotal: fAero + fRoll + fSlope
+                    });
+                }
+            }
+
+            const finalCp = recordedCheckpoints[finishTargetDist.toFixed(3)];
+            return {
+                modeKey,
+                shiftDelayMs,
+                totalMass,
+                wheelRadius,
+                wheelCircumference,
+                primaryRatio,
+                finalRatio,
+                baseReduction,
+                gearData,
+                peakTorqueNm,
+                peakWheelForceN,
+                hitLimiterInGear6,
+                hitLimiterBeforeShift,
+                zeroToHundredTime,
+                topSpeedKmh,
+                checkpoints: recordedCheckpoints,
+                telemetry,
+                finishTime: finalCp ? finalCp.timeSec : (telemetry.length ? telemetry[telemetry.length - 1].t : 0),
+                finishSpeedKmh: finalCp ? finalCp.speedKmh : topSpeedKmh
+            };
+        }
+
+        /***********************************************************************
+         * 3. MASTER SIMULATION RUNNER & UI UPDATER
+         ***********************************************************************/
+        function runAllSimulations() {
+            const params = getInputParams();
+
+            // Update Top Header & Left Panel Badges
+            const totalMass = params.bikeMass + params.riderMass;
+            const pwrToWeight = (params.hp / (totalMass / 1000)).toFixed(1);
+            document.getElementById('headerPwrWeight').textContent = `${pwrToWeight} HP/Ton`;
+            document.getElementById('headerRpmSummary').textContent = `${params.shiftRpm} / ${params.limitRpm} RPM`;
+            document.getElementById('lblTotalMass').textContent = `${totalMass.toFixed(1)} kg`;
+
+            const wheelRadius = (params.wheelDiaMm / 1000) / 2;
+            const wheelCirc = 2 * Math.PI * wheelRadius;
+            document.getElementById('lblWheelRadius').textContent = `${wheelRadius.toFixed(3)} m`;
+            document.getElementById('lblWheelCirc').textContent = `${wheelCirc.toFixed(3)} m`;
+
+            const primRatio = params.primDriven / params.primDrive;
+            const finalRatio = params.rearSprocket / params.frontSprocket;
+            document.getElementById('lblPrimaryRatio').textContent = primRatio.toFixed(3);
+            document.getElementById('lblFinalRatio').textContent = finalRatio.toFixed(3);
+
+            params.gears.forEach((g, i) => {
+                const r = g.driven / g.drive;
+                document.getElementById(`lblRatio${i + 1}`).textContent = r.toFixed(3);
+            });
+
+            // Update Shift Delay Labels
+            document.getElementById('lblClutchMs').textContent = `${params.delayClutchMs} ms`;
+            document.getElementById('lblQsMs').textContent = `${params.delayQsMs} ms`;
+            document.getElementById('lblMaticMs').textContent = `${params.delayMaticMs} ms`;
+            document.querySelectorAll('.lblClutchHdr').forEach(el => el.textContent = params.delayClutchMs);
+            document.querySelectorAll('.lblQsHdr').forEach(el => el.textContent = params.delayQsMs);
+            document.querySelectorAll('.lblMaticHdr').forEach(el => el.textContent = params.delayMaticMs);
+
+            // Run 1000Hz physics for all 3 transmission systems
+            simulationResults.clutch = simulateDragRun(params, params.delayClutchMs, 'clutch');
+            simulationResults.quickshifter = simulateDragRun(params, params.delayQsMs, 'quickshifter');
+            simulationResults.matic = simulateDragRun(params, params.delayMaticMs, 'matic');
+
+            const activeRes = simulationResults[activeTransMode];
+
+            // Update Mode & Rollout Headers
+            const modeNames = {
+                clutch: `Kopling Manual (${params.delayClutchMs} ms)`,
+                quickshifter: `Quickshifter (${params.delayQsMs} ms)`,
+                matic: `Sistem Matic (${params.delayMaticMs} ms)`
+            };
+            document.getElementById('lblActiveModeTitle').textContent = modeNames[activeTransMode];
+            document.getElementById('lblRolloutActive').textContent = params.rolloutM > 0
+                ? `Sensor Lampu Drag (Rollout ${Math.round(params.rolloutM * 100)}cm)`
+                : `True Zero Start (0.00m tanpa Rollout)`;
+            document.getElementById('activeShiftDelayBadge').textContent = `${activeRes.shiftDelayMs} ms / shift`;
+
+            document.getElementById('lblZeroToHundred').textContent = activeRes.zeroToHundredTime !== null
+                ? `${activeRes.zeroToHundredTime.toFixed(2)} s`
+                : `N/A`;
+            document.getElementById('lblTopSpeedSummary').textContent = `${activeRes.topSpeedKmh.toFixed(1)} km/h`;
+
+            // Update Shift RPM vs Limit RPM Warning Banner & Gear 6 Limiter Status Badge
+            const warnBanner = document.getElementById('rpmWarningBanner');
+            const g6Badge = document.getElementById('lblGear6StatusBadge');
+
+            if (params.shiftRpm > params.limitRpm) {
+                warnBanner.className = ' rounded-lg p-2.5 text-[11px] font-mono border bg-red-500/15 border-red-500/50 text-red-300';
+                warnBanner.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-red-400 mr-1"></i> <strong>PERINGATAN:</strong> Shift RPM (${params.shiftRpm}) disetel lebih tinggi dari Limit RPM (${params.limitRpm}). Mesin menyentuh limiter terlebih dahulu (rev bounce) sebelum oper gigi!`;
+            } else if (activeRes.hitLimiterInGear6) {
+                warnBanner.className = ' rounded-lg p-2.5 text-[11px] font-mono border bg-amber-500/15 border-amber-500/50 text-amber-300';
+                warnBanner.innerHTML = `<i class="fa-solid fa-circle-exclamation text-amber-400 mr-1"></i> <strong>INFO RASIO:</strong> Gigi 6 sudah menyentuh Limit RPM (${params.limitRpm} RPM @ ${activeRes.gearData[5].speedAtLimitKmh.toFixed(1)} km/h) sebelum garis finish ${params.trackLengthM}m!`;
+            } else {
+                warnBanner.className = 'hidden';
+            }
+
+            if (activeRes.hitLimiterInGear6) {
+                g6Badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/40';
+                g6Badge.textContent = 'G6 MENTOK LIMITER!';
+            } else {
+                g6Badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+                g6Badge.textContent = 'G6 BELUM LIMIT';
+            }
+
+            // Update Tachometer Bar Markers
+            const gaugeMaxRpm = Math.max(params.limitRpm + 1200, params.shiftRpm + 1200, 15000);
+            document.getElementById('lblGaugeMaxRpm').textContent = gaugeMaxRpm;
+            document.getElementById('lblBarShiftRpm').textContent = params.shiftRpm;
+            document.getElementById('lblBarLimitRpm').textContent = params.limitRpm;
+            document.getElementById('rpmBarShiftLine').style.left = `${Math.min(98, (params.shiftRpm / gaugeMaxRpm) * 100)}%`;
+            document.getElementById('rpmBarLimitLine').style.left = `${Math.min(99, (params.limitRpm / gaugeMaxRpm) * 100)}%`;
+
+            // Render Cards, Comparison Table, Gearbox Table & Live Text Report
+            renderCheckpointCards(activeRes, params);
+            renderComparisonTable(params);
+            renderGearboxTable(activeRes, params);
+            updateTextReportBox(params);
+
+            // Configure Animation Timeline Scrubber
+            animState.maxTime = Math.max(
+                simulationResults.clutch.finishTime,
+                simulationResults.quickshifter.finishTime,
+                simulationResults.matic.finishTime
+            );
+            const scrubber = document.getElementById('raceTimeScrubber');
+            scrubber.max = animState.maxTime.toFixed(2);
+            if (!animState.running) {
+                animState.currentTime = animState.maxTime;
+                scrubber.value = animState.currentTime;
+                updateDashboardAndTrackAtTime(animState.currentTime);
+            }
+
+            drawTelemetryChart();
+        }
+
+        /***********************************************************************
+         * 4. RENDER TIME SLIP CARDS, COMPARISON TABLE, GEARBOX & TEXT REPORT
+         ***********************************************************************/
+        function getCheckpointRecord(simResult, distM) {
+            const key = distM.toFixed(3);
+            return simResult.checkpoints[key] || {
+                distanceM: distM,
+                timeSec: simResult.finishTime,
+                speedKmh: simResult.finishSpeedKmh,
+                gear: 6,
+                rpm: 0
+            };
+        }
+
+        function renderCheckpointCards(activeRes, params) {
+            const container = document.getElementById('checkpointCardsContainer');
+            const finishDist = params.trackLengthM;
+            const checkpointsList = [
+                { label: '60 FT', sub: '18.29 m', dist: 18.288, accent: 'border-emerald-500/40' },
+                { label: '100 M', sub: 'Mid-Track 1', dist: 100.0, accent: 'border-slate-700' },
+                { label: '150 M', sub: 'Mid-Track 2', dist: 150.0, accent: 'border-slate-700' },
+                { label: '201 M', sub: 'Drag Std', dist: 201.0, accent: 'border-cyan-500/40' },
+                { label: `${finishDist} M`, sub: 'Total Finish', dist: finishDist, accent: 'border-amber-500 ring-1 ring-amber-500/30' }
+            ];
+
+            container.innerHTML = checkpointsList.map((cp, idx) => {
+                const rec = getCheckpointRecord(activeRes, cp.dist);
+                const isFinal = idx === checkpointsList.length - 1;
+                return `
+                    <div class="bg-telemetry-card border ${cp.accent} rounded-xl p-3.5 relative overflow-hidden">
+                        ${isFinal ? '<div class="absolute top-0 right-0 bg-amber-500 text-black text-[9px] font-mono font-extrabold px-2 py-0.5 rounded-bl-lg uppercase">FINISH</div>' : ''}
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs font-extrabold font-mono ${isFinal ? 'text-amber-400' : 'text-white'}">${cp.label}</span>
+                            <span class="text-[10px] font-mono text-slate-400">${cp.sub}</span>
+                        </div>
+                        <div class="my-2">
+                            <div class="text-[10px] uppercase font-mono text-slate-400">Waktu Tempuh</div>
+                            <div class="text-xl sm:text-2xl font-mono font-extrabold ${isFinal ? 'text-amber-400' : 'text-white'} tracking-tight">
+                                ${rec.timeSec.toFixed(3)}<span class="text-xs font-normal text-slate-400 ml-0.5">s</span>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-telemetry-border/60 flex items-center justify-between">
+                            <div>
+                                <div class="text-[10px] uppercase font-mono text-slate-400">Kecepatan</div>
+                                <div class="text-sm font-mono font-bold text-cyan-400">${rec.speedKmh.toFixed(1)} <span class="text-[10px] text-slate-400">km/h</span></div>
+                            </div>
+                            <div class="text-right">
+                                <span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] font-mono text-emerald-400">G${rec.gear}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderComparisonTable(params) {
+            const tbody = document.getElementById('comparisonTableBody');
+            const finishDist = params.trackLengthM;
+            const rows = [
+                { name: '60 ft (18.29m)', dist: 18.288 },
+                { name: '100 Meter', dist: 100.0 },
+                { name: '150 Meter', dist: 150.0 },
+                { name: '201 Meter', dist: 201.0 },
+                { name: `${finishDist} Meter (Finish)`, dist: finishDist, highlight: true }
+            ];
+
+            let html = rows.map(row => {
+                const cRec = getCheckpointRecord(simulationResults.clutch, row.dist);
+                const qRec = getCheckpointRecord(simulationResults.quickshifter, row.dist);
+                const mRec = getCheckpointRecord(simulationResults.matic, row.dist);
+                const diffTime = mRec.timeSec - cRec.timeSec;
+                const diffSpeed = mRec.speedKmh - cRec.speedKmh;
+
+                return `
+                    <tr class="${row.highlight ? 'bg-amber-500/10 font-semibold' : 'hover:bg-slate-800/40'} transition">
+                        <td class="py-2.5 px-3 text-slate-200 font-sans font-semibold">${row.name}</td>
+                        <td class="py-2.5 px-3">
+                            <span class="text-white font-bold">${cRec.timeSec.toFixed(3)} s</span>
+                            <span class="block text-[11px] text-slate-400">${cRec.speedKmh.toFixed(1)} km/h</span>
+                        </td>
+                        <td class="py-2.5 px-3">
+                            <span class="text-amber-400 font-bold">${qRec.timeSec.toFixed(3)} s</span>
+                            <span class="block text-[11px] text-slate-400">${qRec.speedKmh.toFixed(1)} km/h</span>
+                        </td>
+                        <td class="py-2.5 px-3">
+                            <span class="text-emerald-400 font-bold">${mRec.timeSec.toFixed(3)} s</span>
+                            <span class="block text-[11px] text-slate-400">${mRec.speedKmh.toFixed(1)} km/h</span>
+                        </td>
+                        <td class="py-2.5 px-3 text-right">
+                            <span class="text-cyan-400 font-bold">${diffTime >= 0 ? '+' : ''}${diffTime.toFixed(3)} s</span>
+                            <span class="block text-[11px] text-emerald-400">${diffSpeed >= 0 ? '+' : ''}${diffSpeed.toFixed(1)} km/h</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Add 0-100 km/h & Top Speed / Limit RPM Status row
+            const c0 = simulationResults.clutch.zeroToHundredTime;
+            const q0 = simulationResults.quickshifter.zeroToHundredTime;
+            const m0 = simulationResults.matic.zeroToHundredTime;
+            const diff0 = (c0 !== null && m0 !== null) ? `${(m0 - c0).toFixed(3)} s` : '-';
+
+            html += `
+                <tr class="bg-slate-900/50 hover:bg-slate-800/40 transition">
+                    <td class="py-2 px-3 text-slate-300 font-sans font-medium">Akselerasi 0 – 100 km/h</td>
+                    <td class="py-2 px-3 text-slate-200">${c0 !== null ? c0.toFixed(3) + ' s' : 'N/A'}</td>
+                    <td class="py-2 px-3 text-amber-400">${q0 !== null ? q0.toFixed(3) + ' s' : 'N/A'}</td>
+                    <td class="py-2 px-3 text-emerald-400">${m0 !== null ? m0.toFixed(3) + ' s' : 'N/A'}</td>
+                    <td class="py-2 px-3 text-right text-cyan-400">${diff0}</td>
+                </tr>
+                <tr class="bg-slate-900/50 hover:bg-slate-800/40 transition">
+                    <td class="py-2 px-3 text-slate-300 font-sans font-medium">Top Speed & Status Limit Gigi 6</td>
+                    <td class="py-2 px-3">
+                        <span class="text-white font-bold">${simulationResults.clutch.topSpeedKmh.toFixed(1)} km/h</span>
+                        <span class="block text-[10px] ${simulationResults.clutch.hitLimiterInGear6 ? 'text-red-400' : 'text-emerald-400'}">${simulationResults.clutch.hitLimiterInGear6 ? 'Mentok Limit RPM' : 'Aman (< Limit)'}</span>
+                    </td>
+                    <td class="py-2 px-3">
+                        <span class="text-amber-400 font-bold">${simulationResults.quickshifter.topSpeedKmh.toFixed(1)} km/h</span>
+                        <span class="block text-[10px] ${simulationResults.quickshifter.hitLimiterInGear6 ? 'text-red-400' : 'text-emerald-400'}">${simulationResults.quickshifter.hitLimiterInGear6 ? 'Mentok Limit RPM' : 'Aman (< Limit)'}</span>
+                    </td>
+                    <td class="py-2 px-3">
+                        <span class="text-emerald-400 font-bold">${simulationResults.matic.topSpeedKmh.toFixed(1)} km/h</span>
+                        <span class="block text-[10px] ${simulationResults.matic.hitLimiterInGear6 ? 'text-red-400' : 'text-emerald-400'}">${simulationResults.matic.hitLimiterInGear6 ? 'Mentok Limit RPM' : 'Aman (< Limit)'}</span>
+                    </td>
+                    <td class="py-2 px-3 text-right text-slate-400 text-[11px]">Limit @ ${simulationResults.matic.gearData[5].speedAtLimitKmh.toFixed(1)} km/h</td>
+                </tr>
+            `;
+
+            tbody.innerHTML = html;
+
+            const finClutch = getCheckpointRecord(simulationResults.clutch, finishDist);
+            const finMatic = getCheckpointRecord(simulationResults.matic, finishDist);
+            const deltaFinish = (finClutch.timeSec - finMatic.timeSec).toFixed(3);
+            document.getElementById('lblGapSummary').textContent = `Matic unggul ${deltaFinish} detik atas Kopling di ${finishDist}m`;
+        }
+
+        function renderGearboxTable(activeRes, params) {
+            document.getElementById('lblTotalBaseReduction').textContent =
+                `Reduksi Primer (${activeRes.primaryRatio.toFixed(3)}) × Final (${activeRes.finalRatio.toFixed(3)}) = ${activeRes.baseReduction.toFixed(3)}`;
+
+            const effectiveTriggerRpm = Math.min(params.shiftRpm, params.limitRpm);
+            const tbody = document.getElementById('gearboxAnalysisBody');
+            tbody.innerHTML = activeRes.gearData.map((g, idx) => {
+                let rpmDropText = `Start @ ${params.launchRpm} RPM`;
+                if (idx > 0) {
+                    const prevGear = activeRes.gearData[idx - 1];
+                    const landedRpm = Math.round(effectiveTriggerRpm * (g.gearRatio / prevGear.gearRatio));
+                    const drop = effectiveTriggerRpm - landedRpm;
+                    rpmDropText = `${effectiveTriggerRpm} → ${landedRpm} (-${drop} RPM)`;
+                }
+                const isTopGear = idx === activeRes.gearData.length - 1;
+                return `
+                    <tr class="hover:bg-slate-800/40">
+                        <td class="py-2 px-3 font-bold text-amber-400">Gigi ${g.gearNumber}</td>
+                        <td class="py-2 px-3 text-slate-300">${g.drive}T / ${g.driven}T</td>
+                        <td class="py-2 px-3 text-white font-semibold">${g.gearRatio.toFixed(3)}</td>
+                        <td class="py-2 px-3 text-cyan-400">${g.totalRatio.toFixed(3)}</td>
+                        <td class="py-2 px-3 text-slate-400">${rpmDropText}</td>
+                        <td class="py-2 px-3 text-right font-bold text-amber-400">${g.speedAtShiftKmh.toFixed(1)} km/h ${isTopGear ? '<span class="text-[10px] text-slate-500">(Pass)</span>' : ''}</td>
+                        <td class="py-2 px-3 text-right font-bold text-red-400">${g.speedAtLimitKmh.toFixed(1)} km/h</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function buildFormattedTextReport(params) {
+            const rollLabel = params.rolloutM > 0 ? `Rollout ${Math.round(params.rolloutM * 100)}cm` : `True Zero 0.00m`;
+            const lines = [
+                `====================================================`,
+                `   LAPORAN TELEMETRI DRAG 203M (1000Hz SIMULATOR)   `,
+                `====================================================`,
+                `Power & Bobot : ${params.hp} HP | ${params.bikeMass + params.riderMass} kg (${params.bikeMass}kg + ${params.riderMass}kg)`,
+                `Konfig RPM    : Peak ${params.peakRpm} RPM | Shift ${params.shiftRpm} RPM | Limit ${params.limitRpm} RPM`,
+                `Start & Ban   : Launch ${params.launchRpm} RPM | Grip ${params.tireMu}G | ${rollLabel}`,
+                `Roda & Lintasan: Ban ${params.wheelDiaMm} mm | Angin ${params.windSpeedKmh} km/h | Slope ${params.trackSlopePct}%`,
+                `Reduksi Primer: ${params.primDrive}T / ${params.primDriven}T | Final Gear: ${params.frontSprocket}T / ${params.rearSprocket}T`,
+                `Rasio Gigi 1-6: 1(${params.gears[0].drive}/${params.gears[0].driven}) 2(${params.gears[1].drive}/${params.gears[1].driven}) 3(${params.gears[2].drive}/${params.gears[2].driven}) 4(${params.gears[3].drive}/${params.gears[3].driven}) 5(${params.gears[4].drive}/${params.gears[4].driven}) 6(${params.gears[5].drive}/${params.gears[5].driven})`,
+                `----------------------------------------------------`,
+                `HASIL KOMPARASI TIME SLIP (WAKTU & KECEPATAN):`,
+                `Titik   | Kopling (${params.delayClutchMs}ms)      | Quickshifter (${params.delayQsMs}ms) | Sistem Matic (${params.delayMaticMs}ms)`,
+            ];
+
+            const pts = [
+                { lbl: '60 ft  ', d: 18.288 },
+                { lbl: '100 m  ', d: 100.0 },
+                { lbl: '150 m  ', d: 150.0 },
+                { lbl: '201 m  ', d: 201.0 },
+                { lbl: `${params.trackLengthM} m  `, d: params.trackLengthM }
+            ];
+
+            pts.forEach(p => {
+                const c = getCheckpointRecord(simulationResults.clutch, p.d);
+                const q = getCheckpointRecord(simulationResults.quickshifter, p.d);
+                const m = getCheckpointRecord(simulationResults.matic, p.d);
+                lines.push(`${p.lbl} | ${c.timeSec.toFixed(3)}s @ ${c.speedKmh.toFixed(1)}km/h | ${q.timeSec.toFixed(3)}s @ ${q.speedKmh.toFixed(1)}km/h | ${m.timeSec.toFixed(3)}s @ ${m.speedKmh.toFixed(1)}km/h`);
+            });
+            lines.push(`====================================================`);
+            return lines.join('\n');
+        }
+
+        function updateTextReportBox(params) {
+            const box = document.getElementById('liveTextReportBox');
+            if (box) {
+                box.textContent = buildFormattedTextReport(params);
+            }
+        }
+
+        /***********************************************************************
+         * 5. LIVE 203M DRAG STRIP CANVAS ANIMATION (3-LANE COMPARISON)
+         ***********************************************************************/
+        function sampleTelemetryAtTime(simRes, timeSec) {
+            const arr = simRes.telemetry;
+            if (!arr || arr.length === 0) return { t: 0, x: 0, vKmh: 0, rpm: 8500, gear: 1, isShifting: false, isLimiterCut: false };
+            if (timeSec <= 0) return arr[0];
+            if (timeSec >= arr[arr.length - 1].t) return arr[arr.length - 1];
+
+            let low = 0, high = arr.length - 1;
+            while (low <= high) {
+                const mid = (low + high) >> 1;
+                if (arr[mid].t < timeSec) low = mid + 1;
+                else high = mid - 1;
+            }
+            const idx = Math.max(1, low);
+            const p0 = arr[idx - 1];
+            const p1 = arr[idx];
+            const ratio = (timeSec - p0.t) / Math.max(1e-6, p1.t - p0.t);
+            return {
+                t: timeSec,
+                x: p0.x + ratio * (p1.x - p0.x),
+                vKmh: p0.vKmh + ratio * (p1.vKmh - p0.vKmh),
+                rpm: p0.rpm + ratio * (p1.rpm - p0.rpm),
+                gear: p1.gear,
+                isShifting: p1.isShifting,
+                isLimiterCut: p1.isLimiterCut
+            };
+        }
+
+        function updateDashboardAndTrackAtTime(timeSec) {
+            const activeSim = simulationResults[activeTransMode];
+            if (!activeSim) return;
+            const params = getInputParams();
+
+            const state = sampleTelemetryAtTime(activeSim, timeSec);
+            document.getElementById('dashTime').innerHTML = `${Math.min(timeSec, activeSim.finishTime).toFixed(3)}<small class="text-xs text-slate-400 ml-0.5">s</small>`;
+            document.getElementById('dashSpeed').innerHTML = `${state.vKmh.toFixed(1)}<small class="text-xs text-slate-400 ml-0.5">km/h</small>`;
+            document.getElementById('dashDist').innerHTML = `${state.x.toFixed(1)}<small class="text-xs text-slate-400 ml-0.5">m</small>`;
+            document.getElementById('dashGear').textContent = `GEAR ${state.gear}`;
+            document.getElementById('dashRpm').innerHTML = `${Math.round(state.rpm)}<small class="text-[10px] text-slate-400 ml-0.5">RPM</small>`;
+
+            // Update Tachometer Bar Fill
+            const gaugeMaxRpm = Math.max(params.limitRpm + 1200, params.shiftRpm + 1200, 15000);
+            const fillPct = Math.min(100, Math.max(0, (state.rpm / gaugeMaxRpm) * 100));
+            document.getElementById('rpmBarFill').style.width = `${fillPct}%`;
+
+            const statusBox = document.getElementById('dashStatusBox');
+            const statusText = document.getElementById('dashStatusText');
+
+            if (timeSec >= activeSim.finishTime) {
+                statusBox.className = 'bg-amber-500/20 border border-amber-500 rounded-lg p-2.5 text-center flex flex-col justify-center';
+                statusText.className = 'text-xs font-mono font-extrabold text-amber-400 uppercase';
+                statusText.textContent = 'FINISH LINE!';
+            } else if (state.isLimiterCut) {
+                statusBox.className = 'shift-flash border rounded-lg p-2.5 text-center flex flex-col justify-center';
+                statusText.className = 'text-xs font-mono font-extrabold text-red-300 uppercase';
+                statusText.textContent = 'REV LIMITER CUT!';
+            } else if (state.isShifting) {
+                statusBox.className = 'shift-flash border rounded-lg p-2.5 text-center flex flex-col justify-center';
+                statusText.className = 'text-xs font-mono font-extrabold text-white uppercase';
+                statusText.textContent = 'SHIFT CUT (0 N)';
+            } else {
+                statusBox.className = 'bg-telemetry-card border border-telemetry-border rounded-lg p-2.5 text-center flex flex-col justify-center';
+                statusText.className = 'text-xs font-mono font-extrabold text-emerald-400 uppercase';
+                statusText.textContent = 'FULL THROTTLE';
+            }
+
+            document.getElementById('lblScrubTime').textContent = `${timeSec.toFixed(2)}s`;
+            drawRaceTrackCanvas(timeSec);
+        }
+
+        function drawRaceTrackCanvas(timeSec) {
+            const canvas = document.getElementById('raceTrackCanvas');
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = rect.width;
+            const H = rect.height;
+            const params = getInputParams();
+            const maxDist = Math.max(params.trackLengthM, 203);
+
+            ctx.fillStyle = '#0b0f17';
+            ctx.fillRect(0, 0, W, H);
+
+            const padLeft = 58;
+            const padRight = 68;
+            const trackW = W - padLeft - padRight;
+
+            const markers = [
+                { d: 0, label: 'START' },
+                { d: 18.288, label: '60FT' },
+                { d: 100, label: '100M' },
+                { d: 150, label: '150M' },
+                { d: 201, label: '201M' },
+                { d: maxDist, label: `${maxDist}M` }
+            ];
+
+            ctx.font = '600 10px "JetBrains Mono", monospace';
+            markers.forEach((m, i) => {
+                const mx = padLeft + (m.d / maxDist) * trackW;
+                ctx.strokeStyle = i === markers.length - 1 ? '#f59e0b' : 'rgba(148, 163, 184, 0.2)';
+                ctx.lineWidth = i === markers.length - 1 ? 2 : 1;
+                ctx.setLineDash(i === markers.length - 1 ? [] : [4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(mx, 22);
+                ctx.lineTo(mx, H - 12);
+                ctx.stroke();
+
+                ctx.fillStyle = i === markers.length - 1 ? '#f59e0b' : '#64748b';
+                ctx.textAlign = 'center';
+                ctx.fillText(m.label, mx, 15);
+            });
+            ctx.setLineDash([]);
+
+            const lanes = [
+                { key: 'clutch', name: `KOPLING (${params.delayClutchMs}ms)`, color: '#ef4444', y: 58 },
+                { key: 'quickshifter', name: `QUICKSHIFTER (${params.delayQsMs}ms)`, color: '#f59e0b', y: 122 },
+                { key: 'matic', name: `SISTEM MATIC (${params.delayMaticMs}ms)`, color: '#10b981', y: 186 }
+            ];
+
+            lanes.forEach(lane => {
+                ctx.fillStyle = 'rgba(30, 41, 59, 0.35)';
+                ctx.fillRect(10, lane.y - 22, W - 20, 44);
+
+                ctx.strokeStyle = activeTransMode === lane.key ? lane.color : 'rgba(51, 65, 85, 0.5)';
+                ctx.lineWidth = activeTransMode === lane.key ? 1.5 : 1;
+                ctx.strokeRect(10, lane.y - 22, W - 20, 44);
+
+                ctx.fillStyle = 'rgba(148, 163, 184, 0.6)';
+                ctx.font = '700 10px "JetBrains Mono", monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText(lane.name, 18, lane.y - 8);
+
+                const sim = simulationResults[lane.key];
+                if (!sim) return;
+                const st = sampleTelemetryAtTime(sim, timeSec);
+                const bx = padLeft + Math.min(1, st.x / maxDist) * trackW;
+
+                const grad = ctx.createLinearGradient(padLeft, 0, bx, 0);
+                grad.addColorStop(0, 'rgba(15, 23, 42, 0.1)');
+                grad.addColorStop(1, lane.color + '55');
+                ctx.fillStyle = grad;
+                ctx.fillRect(padLeft, lane.y - 4, Math.max(0, bx - padLeft), 8);
+
+                ctx.save();
+                ctx.translate(bx, lane.y);
+
+                if ((st.isShifting || st.isLimiterCut) && timeSec < sim.finishTime) {
+                    ctx.fillStyle = 'rgba(239, 68, 68, 0.35)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#fca5a5';
+                    ctx.font = '700 9px "JetBrains Mono", monospace';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(st.isLimiterCut ? 'LIMIT!' : 'SHIFT!', 0, -13);
+                }
+
+                // Wheels
+                ctx.fillStyle = '#0f172a';
+                ctx.strokeStyle = lane.color;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(-9, 5, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(9, 5, 5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Chassis
+                ctx.fillStyle = lane.color;
+                ctx.beginPath();
+                ctx.moveTo(-10, 5);
+                ctx.lineTo(-3, -5);
+                ctx.lineTo(11, -3);
+                ctx.lineTo(9, 5);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = '700 10px "JetBrains Mono", monospace';
+                ctx.textAlign = 'left';
+                const tagX = Math.min(W - 76, bx + 16);
+                ctx.fillText(`G${st.gear} ${st.vKmh.toFixed(0)}km/h`, tagX, lane.y + 3);
+            });
+        }
+
+        function startRaceAnimation() {
+            if (animState.rafId) cancelAnimationFrame(animState.rafId);
+            animState.running = true;
+            animState.currentTime = 0;
+            animState.lastFrameTs = performance.now();
+            animState.speedMultiplier = parseFloat(document.getElementById('selSimSpeed').value) || 1.0;
+
+            const btn = document.getElementById('btnStartRace');
+            btn.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+
+            function step(now) {
+                if (!animState.running) return;
+                const dtReal = (now - animState.lastFrameTs) / 1000;
+                animState.lastFrameTs = now;
+
+                animState.currentTime += dtReal * animState.speedMultiplier;
+                const scrubber = document.getElementById('raceTimeScrubber');
+
+                if (animState.currentTime >= animState.maxTime) {
+                    animState.currentTime = animState.maxTime;
+                    scrubber.value = animState.currentTime;
+                    updateDashboardAndTrackAtTime(animState.currentTime);
+                    animState.running = false;
+                    btn.innerHTML = '<i class="fa-solid fa-play"></i> Replay Race';
+                    return;
+                }
+
+                scrubber.value = animState.currentTime;
+                updateDashboardAndTrackAtTime(animState.currentTime);
+                animState.rafId = requestAnimationFrame(step);
+            }
+
+            animState.rafId = requestAnimationFrame(step);
+        }
+
+        /***********************************************************************
+         * 6. INTERACTIVE TELEMETRY & DYNO CHARTS (WITH SHIFT & LIMIT RPM LINES)
+         ***********************************************************************/
+        function drawTelemetryChart() {
+            const canvas = document.getElementById('telemetryChartCanvas');
+            if (!canvas) return;
+            const rect = canvas.parentElement.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const W = rect.width;
+            const H = rect.height;
+            const padL = 58, padR = 26, padT = 28, padB = 38;
+            const plotW = W - padL - padR;
+            const plotH = H - padT - padB;
+
+            ctx.fillStyle = '#090c10';
+            ctx.fillRect(0, 0, W, H);
+
+            const params = getInputParams();
+            const maxDist = Math.max(params.trackLengthM, 203);
+            const maxTime = Math.max(
+                simulationResults.clutch.finishTime,
+                simulationResults.quickshifter.finishTime,
+                simulationResults.matic.finishTime,
+                5.0
+            );
+
+            if (activeChartTab === 'dyno') {
+                drawDynoCurveChart(ctx, W, H, padL, padR, padT, padB, plotW, plotH, params);
+                return;
+            }
+
+            let maxY = 160;
+            if (activeChartTab === 'speed_dist' || activeChartTab === 'speed_time') {
+                maxY = Math.ceil(Math.max(
+                    simulationResults.matic.topSpeedKmh,
+                    simulationResults.clutch.topSpeedKmh,
+                    120
+                ) / 20) * 20;
+            } else if (activeChartTab === 'rpm') {
+                maxY = Math.ceil((Math.max(params.limitRpm, params.shiftRpm) + 1200) / 2000) * 2000;
+            } else if (activeChartTab === 'force') {
+                maxY = Math.ceil(Math.max(simulationResults.matic.peakWheelForceN, 1000) / 250) * 250;
+            }
+
+            // Y-axis Grid Lines
+            ctx.strokeStyle = 'rgba(35, 44, 61, 0.8)';
+            ctx.lineWidth = 1;
+            ctx.font = '500 10px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#64748b';
+
+            const ySteps = 5;
+            for (let i = 0; i <= ySteps; i++) {
+                const val = (maxY / ySteps) * i;
+                const py = padT + plotH - (i / ySteps) * plotH;
+                ctx.beginPath();
+                ctx.moveTo(padL, py);
+                ctx.lineTo(padL + plotW, py);
+                ctx.stroke();
+
+                ctx.textAlign = 'right';
+                ctx.fillText(Math.round(val), padL - 8, py + 3);
+            }
+
+            // X-axis Grid Lines (Distance or Time)
+            if (activeChartTab === 'speed_time') {
+                const tSteps = 8;
+                for (let i = 0; i <= tSteps; i++) {
+                    const tVal = (maxTime / tSteps) * i;
+                    const px = padL + (i / tSteps) * plotW;
+                    ctx.beginPath();
+                    ctx.moveTo(px, padT);
+                    ctx.lineTo(px, padT + plotH);
+                    ctx.stroke();
+
+                    ctx.textAlign = 'center';
+                    ctx.fillText(`${tVal.toFixed(1)}s`, px, padT + plotH + 18);
+                }
+            } else {
+                const xCheckpoints = [0, 18.288, 50, 100, 150, 201, maxDist];
+                xCheckpoints.forEach(d => {
+                    if (d > maxDist) return;
+                    const px = padL + (d / maxDist) * plotW;
+                    ctx.beginPath();
+                    ctx.moveTo(px, padT);
+                    ctx.lineTo(px, padT + plotH);
+                    ctx.stroke();
+
+                    ctx.textAlign = 'center';
+                    const lbl = d === 18.288 ? '60ft' : `${Math.round(d)}m`;
+                    ctx.fillText(lbl, px, padT + plotH + 18);
+                });
+            }
+
+            const modes = [
+                { key: 'clutch', color: '#ef4444', label: `Kopling (${params.delayClutchMs}ms)` },
+                { key: 'quickshifter', color: '#f59e0b', label: `Quickshifter (${params.delayQsMs}ms)` },
+                { key: 'matic', color: '#10b981', label: `Matic (${params.delayMaticMs}ms)` }
+            ];
+
+            // Plot Curves
+            if (activeChartTab === 'speed_dist' || activeChartTab === 'speed_time') {
+                modes.forEach(m => {
+                    const tele = simulationResults[m.key].telemetry;
+                    ctx.strokeStyle = m.color;
+                    ctx.lineWidth = activeTransMode === m.key ? 2.6 : 1.5;
+                    ctx.beginPath();
+                    tele.forEach((pt, idx) => {
+                        const px = activeChartTab === 'speed_time'
+                            ? padL + (pt.t / maxTime) * plotW
+                            : padL + (pt.x / maxDist) * plotW;
+                        const py = padT + plotH - (pt.vKmh / maxY) * plotH;
+                        if (idx === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    });
+                    ctx.stroke();
+                });
+                drawLegend(ctx, padL + 12, padT + 10, modes);
+            } else if (activeChartTab === 'rpm') {
+                // Draw Reference Horizontal Line for Shift RPM (Yellow) & Limit RPM (Red)
+                const pyShift = padT + plotH - (params.shiftRpm / maxY) * plotH;
+                const pyLimit = padT + plotH - (params.limitRpm / maxY) * plotH;
+
+                ctx.save();
+                ctx.setLineDash([6, 4]);
+                ctx.strokeStyle = 'rgba(245, 158, 11, 0.7)';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(padL, pyShift);
+                ctx.lineTo(padL + plotW, pyShift);
+                ctx.stroke();
+                ctx.fillStyle = '#fbbf24';
+                ctx.textAlign = 'right';
+                ctx.fillText(`SHIFT RPM (${params.shiftRpm})`, padL + plotW - 6, pyShift - 4);
+
+                ctx.strokeStyle = 'rgba(239, 68, 68, 0.85)';
+                ctx.beginPath();
+                ctx.moveTo(padL, pyLimit);
+                ctx.lineTo(padL + plotW, pyLimit);
+                ctx.stroke();
+                ctx.fillStyle = '#f87171';
+                ctx.fillText(`LIMIT RPM (${params.limitRpm})`, padL + plotW - 6, pyLimit - 4);
+                ctx.restore();
+
+                // Plot all 3 modes RPM curves (active mode bold)
+                modes.forEach(m => {
+                    const tele = simulationResults[m.key].telemetry;
+                    ctx.strokeStyle = m.color;
+                    ctx.lineWidth = activeTransMode === m.key ? 2.4 : 1.1;
+                    ctx.globalAlpha = activeTransMode === m.key ? 1.0 : 0.45;
+                    ctx.beginPath();
+                    tele.forEach((pt, idx) => {
+                        const px = padL + (pt.x / maxDist) * plotW;
+                        const py = padT + plotH - (pt.rpm / maxY) * plotH;
+                        if (idx === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    });
+                    ctx.stroke();
+                });
+                ctx.globalAlpha = 1.0;
+                drawLegend(ctx, padL + 12, padT + 10, modes);
+            } else if (activeChartTab === 'force') {
+                const activeTele = simulationResults[activeTransMode].telemetry;
+                ctx.strokeStyle = '#06b6d4';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                activeTele.forEach((pt, idx) => {
+                    const px = padL + (pt.x / maxDist) * plotW;
+                    const py = padT + plotH - (pt.fDrive / maxY) * plotH;
+                    if (idx === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                });
+                ctx.stroke();
+
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                activeTele.forEach((pt, idx) => {
+                    const px = padL + (pt.x / maxDist) * plotW;
+                    const py = padT + plotH - (pt.fDragTotal / maxY) * plotH;
+                    if (idx === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                });
+                ctx.stroke();
+
+                drawLegend(ctx, padL + 12, padT + 10, [
+                    { color: '#06b6d4', label: 'Gaya Dorong Roda (F_drive [N])' },
+                    { color: '#ef4444', label: 'Hambatan Total (Angin + Ban + Slope [N])' }
+                ]);
+            }
+
+            // Interactive Hover Crosshair
+            if (chartHoverX !== null && chartHoverX >= padL && chartHoverX <= padL + plotW) {
+                const fracX = (chartHoverX - padL) / plotW;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+                ctx.lineWidth = 1;
+                ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                ctx.moveTo(chartHoverX, padT);
+                ctx.lineTo(chartHoverX, padT + plotH);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                const tele = simulationResults[activeTransMode].telemetry;
+                let nearest = tele[0];
+                if (activeChartTab === 'speed_time') {
+                    const hoverT = fracX * maxTime;
+                    for (let pt of tele) {
+                        if (Math.abs(pt.t - hoverT) < Math.abs(nearest.t - hoverT)) nearest = pt;
+                    }
+                } else {
+                    const hoverDist = fracX * maxDist;
+                    for (let pt of tele) {
+                        if (Math.abs(pt.x - hoverDist) < Math.abs(nearest.x - hoverDist)) nearest = pt;
+                    }
+                }
+
+                const tipW = 205, tipH = 72;
+                const tipX = Math.min(W - tipW - 15, chartHoverX + 12);
+                const tipY = padT + 16;
+                ctx.fillStyle = 'rgba(17, 22, 31, 0.95)';
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 1;
+                ctx.fillRect(tipX, tipY, tipW, tipH);
+                ctx.strokeRect(tipX, tipY, tipW, tipH);
+
+                ctx.fillStyle = '#f8fafc';
+                ctx.textAlign = 'left';
+                ctx.font = '700 10px "JetBrains Mono", monospace';
+                ctx.fillText(`Jarak: ${nearest.x.toFixed(1)}m | t: ${nearest.t.toFixed(3)}s`, tipX + 8, tipY + 16);
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillText(`Speed: ${nearest.vKmh.toFixed(1)} km/h (Gigi ${nearest.gear})`, tipX + 8, tipY + 34);
+                ctx.fillStyle = nearest.isLimiterCut ? '#f87171' : '#f59e0b';
+                ctx.fillText(`RPM  : ${Math.round(nearest.rpm)} ${nearest.isLimiterCut ? '[LIMIT!]' : ''}`, tipX + 8, tipY + 52);
+            }
+        }
+
+        function drawDynoCurveChart(ctx, W, H, padL, padR, padT, padB, plotW, plotH, params) {
+            const minRpm = 4000;
+            const maxRpm = Math.max(params.limitRpm + 1000, params.shiftRpm + 1000, 15000);
+            const maxHpScale = Math.ceil((params.hp * 1.25) / 10) * 10;
+
+            ctx.strokeStyle = 'rgba(35, 44, 61, 0.8)';
+            ctx.lineWidth = 1;
+            ctx.font = '500 10px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#64748b';
+
+            for (let i = 0; i <= 5; i++) {
+                const val = (maxHpScale / 5) * i;
+                const py = padT + plotH - (i / 5) * plotH;
+                ctx.beginPath();
+                ctx.moveTo(padL, py);
+                ctx.lineTo(padL + plotW, py);
+                ctx.stroke();
+                ctx.textAlign = 'right';
+                ctx.fillText(`${Math.round(val)}`, padL - 8, py + 3);
+            }
+
+            const rpmSteps = 6;
+            for (let i = 0; i <= rpmSteps; i++) {
+                const r = minRpm + ((maxRpm - minRpm) / rpmSteps) * i;
+                const px = padL + (i / rpmSteps) * plotW;
+                ctx.beginPath();
+                ctx.moveTo(px, padT);
+                ctx.lineTo(px, padT + plotH);
+                ctx.stroke();
+                ctx.textAlign = 'center';
+                ctx.fillText(`${Math.round(r)}`, px, padT + plotH + 18);
+            }
+
+            // Draw Vertical Markers for Peak RPM, Shift RPM, and Limit RPM
+            const markers = [
+                { rpm: params.peakRpm, label: 'PEAK HP', color: '#38bdf8' },
+                { rpm: params.shiftRpm, label: 'SHIFT RPM', color: '#f59e0b' },
+                { rpm: params.limitRpm, label: 'LIMIT RPM', color: '#ef4444' }
+            ];
+            markers.forEach(m => {
+                if (m.rpm >= minRpm && m.rpm <= maxRpm) {
+                    const mx = padL + ((m.rpm - minRpm) / (maxRpm - minRpm)) * plotW;
+                    ctx.save();
+                    ctx.setLineDash([5, 4]);
+                    ctx.strokeStyle = m.color;
+                    ctx.beginPath();
+                    ctx.moveTo(mx, padT);
+                    ctx.lineTo(mx, padT + plotH);
+                    ctx.stroke();
+                    ctx.fillStyle = m.color;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(m.label, mx, padT + 12);
+                    ctx.restore();
+                }
+            });
+
+            // Plot Horsepower Curve up to Limit RPM
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let r = minRpm; r <= params.limitRpm; r += 100) {
+                const eng = calculateEnginePowerAndTorque(r, params);
+                const px = padL + ((r - minRpm) / (maxRpm - minRpm)) * plotW;
+                const py = padT + plotH - (eng.hp / maxHpScale) * plotH;
+                if (r === minRpm) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            // Plot Torque Curve (Nm) up to Limit RPM
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let r = minRpm; r <= params.limitRpm; r += 100) {
+                const eng = calculateEnginePowerAndTorque(r, params);
+                const px = padL + ((r - minRpm) / (maxRpm - minRpm)) * plotW;
+                const py = padT + plotH - (eng.torqueNm / maxHpScale) * plotH;
+                if (r === minRpm) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            drawLegend(ctx, padL + 12, padT + 22, [
+                { color: '#f59e0b', label: `Kurva Tenaga (Peak ${params.hp.toFixed(1)} HP @ ${params.peakRpm} RPM)` },
+                { color: '#10b981', label: `Kurva Torsi Mesin (Nm) — Cut @ Limit ${params.limitRpm} RPM` }
+            ]);
+        }
+
+        function drawLegend(ctx, x, y, items) {
+            items.forEach((it, idx) => {
+                const ly = y + idx * 18;
+                ctx.fillStyle = it.color;
+                ctx.fillRect(x, ly, 12, 3);
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = '600 10px "JetBrains Mono", monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText(it.label, x + 18, ly + 4);
+            });
+        }
+
+        /***********************************************************************
+         * 7. APPLY PRESETS, CLIPBOARD & EVENT LISTENERS
+         ***********************************************************************/
+        function applyPresetConfig(presetKey) {
+            const p = PRESET_CONFIGS[presetKey];
+            if (!p) return;
+
+            document.getElementById('inpHp').value = p.hp;
+            document.getElementById('inpHpType').value = p.hpEfficiency.toFixed(2);
+            document.getElementById('inpPeakRpm').value = p.peakRpm;
+            document.getElementById('inpShiftRpm').value = p.shiftRpm;
+            document.getElementById('inpLimitRpm').value = p.limitRpm;
+            document.getElementById('inpLaunchRpm').value = p.launchRpm;
+            document.getElementById('inpBikeMass').value = p.bikeMass;
+            document.getElementById('inpRiderMass').value = p.riderMass;
+            document.getElementById('inpWheelDia').value = p.wheelDiaMm;
+            document.getElementById('inpPrimDrive').value = p.primDrive;
+            document.getElementById('inpPrimDriven').value = p.primDriven;
+            document.getElementById('inpFrontSprocket').value = p.frontSprocket;
+            document.getElementById('inpRearSprocket').value = p.rearSprocket;
+
+            p.gears.forEach((g, idx) => {
+                document.getElementById(`g${idx + 1}Drive`).value = g.drive;
+                document.getElementById(`g${idx + 1}Driven`).value = g.driven;
+            });
+
+            document.getElementById('inpDelayClutch').value = p.delayClutchMs;
+            document.getElementById('inpDelayQs').value = p.delayQsMs;
+            document.getElementById('inpDelayMatic').value = p.delayMaticMs;
+            document.getElementById('inpRolloutMode').value = p.rolloutM.toFixed(2);
+            document.getElementById('inpTireMu').value = p.tireMu;
+            document.getElementById('inpFlywheelImpulse').value = p.flywheelImpulsePct;
+            document.getElementById('inpWindSpeed').value = p.windSpeedKmh;
+            document.getElementById('inpTrackSlope').value = p.trackSlopePct;
+            document.getElementById('inpTrackLength').value = p.trackLengthM;
+            document.getElementById('inpCdA').value = p.cdA;
+            document.getElementById('inpCrr').value = p.crr;
+
+            runAllSimulations();
+        }
+
+        function copyTimeSlipToClipboard() {
+            const params = getInputParams();
+            const textArea = document.createElement('textarea');
+            textArea.value = buildFormattedTextReport(params);
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            const toast = document.getElementById('toastNotification');
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 2600);
+        }
+
+        window.onload = function () {
+            // Bind all numerical & select inputs
+            document.querySelectorAll('.sim-input').forEach(inp => {
+                inp.addEventListener('input', () => runAllSimulations());
+                inp.addEventListener('change', () => runAllSimulations());
+            });
+
+            // Preset Buttons
+            const highlightPresetBtn = (activeId) => {
+                ['btnPreset1', 'btnPreset2', 'btnPreset3'].forEach(id => {
+                    const b = document.getElementById(id);
+                    if (id === activeId) {
+                        b.className = 'preset-btn active-preset px-3.5 py-2 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-left transition';
+                    } else {
+                        b.className = 'preset-btn px-3.5 py-2 rounded-xl border border-telemetry-border bg-telemetry-card hover:border-amber-500/50 text-left transition';
+                    }
+                });
+            };
+
+            document.getElementById('btnPreset1').addEventListener('click', () => {
+                highlightPresetBtn('btnPreset1');
+                applyPresetConfig('preset1');
+            });
+            document.getElementById('btnPreset2').addEventListener('click', () => {
+                highlightPresetBtn('btnPreset2');
+                applyPresetConfig('preset2');
+            });
+            document.getElementById('btnPreset3').addEventListener('click', () => {
+                highlightPresetBtn('btnPreset3');
+                applyPresetConfig('preset3');
+            });
+
+            // Transmission Mode Selector Buttons
+            document.querySelectorAll('.trans-mode-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeTransMode = btn.getAttribute('data-mode');
+                    document.querySelectorAll('.trans-mode-btn').forEach(b => {
+                        b.className = 'trans-mode-btn group relative flex flex-col items-center justify-center p-3 rounded-xl border border-telemetry-border bg-telemetry-card hover:border-amber-500/60 transition text-center';
+                    });
+                    btn.className = 'trans-mode-btn active-mode group relative flex flex-col items-center justify-center p-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 transition text-center';
+                    runAllSimulations();
+                });
+            });
+
+            // Chart Tab Buttons
+            document.querySelectorAll('.chart-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    activeChartTab = btn.getAttribute('data-chart');
+                    document.querySelectorAll('.chart-tab-btn').forEach(b => {
+                        b.className = 'chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold text-slate-300 hover:text-white transition';
+                    });
+                    btn.className = 'chart-tab-btn px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-amber-500 text-black transition';
+                    drawTelemetryChart();
+                });
+            });
+
+            // Start / Pause Drag Race Animation
+            document.getElementById('btnStartRace').addEventListener('click', () => {
+                if (animState.running) {
+                    animState.running = false;
+                    document.getElementById('btnStartRace').innerHTML = '<i class="fa-solid fa-play"></i> Lanjutkan';
+                } else {
+                    startRaceAnimation();
+                }
+            });
+
+            document.getElementById('btnResetRace').addEventListener('click', () => {
+                animState.running = false;
+                animState.currentTime = 0;
+                document.getElementById('raceTimeScrubber').value = 0;
+                document.getElementById('btnStartRace').innerHTML = '<i class="fa-solid fa-play"></i> Start Drag Race';
+                updateDashboardAndTrackAtTime(0);
+            });
+
+            // Timeline Scrubber
+            document.getElementById('raceTimeScrubber').addEventListener('input', (e) => {
+                animState.running = false;
+                document.getElementById('btnStartRace').innerHTML = '<i class="fa-solid fa-play"></i> Start Drag Race';
+                animState.currentTime = parseFloat(e.target.value) || 0;
+                updateDashboardAndTrackAtTime(animState.currentTime);
+            });
+
+            // Telemetry Chart Hover Crosshair
+            const chartCanvas = document.getElementById('telemetryChartCanvas');
+            chartCanvas.addEventListener('mousemove', (e) => {
+                const rect = chartCanvas.getBoundingClientRect();
+                chartHoverX = e.clientX - rect.left;
+                drawTelemetryChart();
+            });
+            chartCanvas.addEventListener('mouseleave', () => {
+                chartHoverX = null;
+                drawTelemetryChart();
+            });
+
+            // Reset & Copy Buttons
+            document.getElementById('btnResetDefaults').addEventListener('click', () => {
+                highlightPresetBtn('btnPreset1');
+                applyPresetConfig('preset1');
+            });
+            document.getElementById('btnCopyReport').addEventListener('click', copyTimeSlipToClipboard);
+            document.getElementById('btnCopyTextBox').addEventListener('click', copyTimeSlipToClipboard);
+
+            // Responsive Resize Handler
+            window.addEventListener('resize', () => {
+                updateDashboardAndTrackAtTime(animState.currentTime);
+                drawTelemetryChart();
+            });
+
+            // Initial Simulation Run with Preset 1
+            applyPresetConfig('preset1');
+        };
+    </script>
+</body>
+</html>
